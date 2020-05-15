@@ -1,0 +1,32 @@
+.display-4 {
+    text-shadow: 2px 2px 3px rgb(128,128,128);
+    text-align: center;
+}
+.display-4 + p {
+    text-align: center;
+    text-shadow: 0.3px 0.3px 0.6px black;
+}
+
+.loginframe {
+    background-color: #fdfdfd;
+    border-bottom: solid 1px #dee2e6;
+    border-left: solid 1px #dee2e6;
+    border-right: solid 1px #dee2e6;
+    border-bottom-left-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+    padding: 5%;
+}
+
+.signbox {
+    max-width: 600px;
+    margin: auto;
+}
+#userbox {
+    box-shadow: 0 20px 30px rgba(0,0,0,.3);
+    padding: 5%;
+    border-radius: 15px;
+    background-color: #f2f2f2;
+}
+#userbox p {
+    text-indent: 15px;
+}

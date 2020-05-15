@@ -1,0 +1,74 @@
+#lobby {
+    padding: 15px;
+}
+#lobby .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 100%;
+}
+
+#lobby .pagination > li, #lobby .pagination > li:not(.active) > a {
+    background-color: #f8f9fa;
+}
+#lobby.dark .pagination > li, #lobby.dark .pagination > li:not(.active) > a {
+    background-color: #343a40;
+}
+#lobby .card {
+    width: 400px;
+    margin: 10px;
+    box-shadow: 0 0 5px gray;
+    user-select: none;
+    background-color: #fdfdfd;
+}
+#lobby.dark .card {
+    box-shadow: 0 0 5px #fdfdfd;
+    background-color: #67747e;
+}
+#lobby.dark .card .name {
+    color: #fdfdfd;
+    text-shadow: 1px 0 3px black, 0 1px 3px black, -1px 0 3px black, 0 -1px 3px black;
+}
+#lobby .card a:hover .name {
+    text-decoration: underline;
+}
+#lobby.dark .card a:hover .name {
+    color: navy;
+    text-shadow: 1px 0 3px #fdfdfd, 0 1px 3px #fdfdfd, -1px 0 3px #fdfdfd, 0 -1px 3px #fdfdfd;
+}
+#lobby .card:hover {
+    box-shadow: 0 0 5px black;
+}
+#lobby .card a {
+    text-decoration: none;
+}
+#lobby .card span {
+    vertical-align: middle;
+}
+#lobby .card img:last-child {
+    margin-right: 17px;
+}
+#content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+#no_records {
+    position: fixed;
+    top: 50%;
+    transform: translate(0, -50%);
+    user-select: none;
+}
+#no_records > span {
+    vertical-align: bottom;
+    position: relative;
+    bottom: 15px;
+    font-size: 40px;
+}
+#no_records > div {
+    font-size: 40px;
+}

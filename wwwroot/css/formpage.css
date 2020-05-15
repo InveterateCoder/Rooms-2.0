@@ -1,0 +1,73 @@
+.formpage {
+    max-width: 720px;
+    padding-top: 20px;
+}
+.formpage .acnt-img {
+    border: none;
+    margin: 10px;
+    padding: 0;
+    outline: none;
+    background-color: transparent;
+}
+.formpage .flag {
+    padding-top: 5px;
+}
+.formpage.dark input[type=text]:not(:focus) {
+    color: #f8f9fa;
+}
+.formpage input[type=text] {
+    border: 0;
+}
+.formpage input[type=text]:not(:focus){
+    background-color: transparent;
+    border-bottom: 1px solid #343a40;
+}
+.formpage.dark input[type=text]:not(:focus){
+    border-color: #f8f9fa;
+}
+.formpage label {
+    position: relative;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+.formpage.dark label {
+    color: #f8f9fa;
+}
+.formpage .error:not(:focus) {
+    border-bottom: 1px solid #dc3545 !important;
+}
+.formpage .input-group-text {
+    border: 0;
+    background-color: transparent;
+}
+.formpage.dark .input-group-text {
+    color: #f8f9fa;
+}
+.formpage p {
+    text-indent: 55px;
+}
+.formpage h5 > span > button{
+    background-color: transparent;
+    border: none;
+}
+#password_modal p {
+    text-indent: 25px;
+}
+.badge-times {
+    cursor: pointer;
+    margin-left: 5px;
+}
+.formpage textarea {
+    resize: none;
+}
+.formpage textarea:not(:focus) {
+    background-color: transparent;
+}
+.formpage.dark textarea:not(:focus) {
+    color: #f8f9fa;
+}
+#conf_acc_change {
+    margin-top: 30px;
+    text-align: right;
+    margin-bottom: 30px;
+}
