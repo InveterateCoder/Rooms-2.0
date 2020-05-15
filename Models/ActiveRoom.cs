@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
 
 namespace Rooms.Models
 {
@@ -36,9 +37,9 @@ namespace Rooms.Models
                     _messages.Remove(key);
             }
         }
-        public void AddUser(string connectionId, string name, string icon, long id, string guid)
+        public void AddUser(IPAddress ipAddress, string connectionId, string name, string icon, long id, string guid)
         {
-            var user = new ActiveUser(icon, name);
+            var user = new ActiveUser(icon, name, ipAddress);
             if (id != 0) _registered_users.GetOrAdd(id, user).AddConnection(connectionId);
             else if (guid != null) _guest_users.GetOrAdd(guid, user).AddConnection(connectionId);
             else throw new ArgumentException("Either id or guid must be provided.");
@@ -221,14 +222,16 @@ namespace Rooms.Models
     }
     public class ActiveUser
     {
+        public IPAddress ipAddress;
         public List<string> connectionIds;
         public string voiceConnection;
         public string icon;
         public string name;
-        public ActiveUser(string icon, string name)
+        public ActiveUser(string icon, string name, IPAddress ipAddress)
         {
             this.icon = icon;
             this.name = name;
+            this.ipAddress = ipAddress;
             this.connectionIds = new List<string>();
         }
         public void AddConnection(string connectionId)

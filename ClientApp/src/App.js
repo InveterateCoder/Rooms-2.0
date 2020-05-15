@@ -11,35 +11,6 @@ import Countries from "./data/countries"
 export default class App extends Component {
     constructor(props) {
         super(props);
-        let timeNow = Date.now();
-        let setm = localStorage.getItem("setm") || [];
-        if (setm.length === 0) localStorage.setItem("setm", JSON.stringify([]));
-        else {
-            setm = JSON.parse(setm);
-            let filteredSetm = [];
-            for (let id of setm) {
-                let time = Number.parseInt(localStorage.getItem(id + "_m"));
-                if (!time || time < timeNow)
-                    localStorage.removeItem(id + "_m");
-                else filteredSetm.push(id);
-            }
-            localStorage.setItem('setm', JSON.stringify(filteredSetm));
-            setm = filteredSetm;
-        }
-        let setb = localStorage.getItem("setb") || [];
-        if (setb.length === 0) localStorage.setItem("setb", JSON.stringify([]));
-        else {
-            setb = JSON.parse(setb);
-            let filteredSetb = [];
-            for (let id of setb) {
-                let time = Number.parseInt(localStorage.getItem(id + "_b"));
-                if (!time || time < timeNow)
-                    localStorage.removeItem(id + "_b");
-                else filteredSetb.push(id);
-            }
-            localStorage.setItem("setb", JSON.stringify(filteredSetb));
-            setb = filteredSetb;
-        }
         let filters = localStorage.getItem("filters");
         filters = filters ? JSON.parse(filters) : {};
         let registered = localStorage.getItem("registered");
@@ -67,9 +38,7 @@ export default class App extends Component {
             icon: registered ? localStorage.getItem("icon") || "user" : "user",
             perpage: registered ? localStorage.getItem("perpage") || 30 : 30,
             openin: registered ? localStorage.getItem("opin") || "nw" : "nw",
-            theme,
-            setm,
-            setb
+            theme
         }
     }
     bestLang = () => {
@@ -233,29 +202,27 @@ export default class App extends Component {
             });
     }
     render() {
-        if (!navigator.webdriver)
-            return <Context.Provider value={{
-                ...this.state,
-                setB: this.setB, setM: this.setM, remB: this.remB, remM: this.remM,
-                signOut: this.signOut, changeFilters: this.changeFilters,
-                setLanguage: this.setLanguage, changeAccaunt: this.changeAccaunt,
-                changeRoom: this.changeRoom, changeIcon: this.changeIcon,
-                userRegistered: this.userRegistered, signInAsUser: this.signInAsUser,
-                signInAsGuest: this.signInAsGuest, setPerpage: this.setPerpage,
-                setOpenIn: this.setOpenIn, setTheme: this.setTheme
-            }}>
-                {
-                    this.state.jwt && !this.state.name
-                        ? <Preloader />
-                        : <Switch>
-                            {
-                                this.state.jwt && <Route path="/room/:room" component={Room} />
-                            }
-                            <Route path="/" component={Home} />
-                        </Switch>
-                }
-            </Context.Provider>
-        else return <Preloader />
+        return <Context.Provider value={{
+            ...this.state,
+            setB: this.setB, setM: this.setM, remB: this.remB, remM: this.remM,
+            signOut: this.signOut, changeFilters: this.changeFilters,
+            setLanguage: this.setLanguage, changeAccaunt: this.changeAccaunt,
+            changeRoom: this.changeRoom, changeIcon: this.changeIcon,
+            userRegistered: this.userRegistered, signInAsUser: this.signInAsUser,
+            signInAsGuest: this.signInAsGuest, setPerpage: this.setPerpage,
+            setOpenIn: this.setOpenIn, setTheme: this.setTheme
+        }}>
+            {
+                this.state.jwt && !this.state.name
+                    ? <Preloader />
+                    : <Switch>
+                        {
+                            this.state.jwt && <Route path="/room/:room" component={Room} />
+                        }
+                        <Route path="/" component={Home} />
+                    </Switch>
+            }
+        </Context.Provider>
     }
     componentDidMount() {
         if (this.state.jwt) {

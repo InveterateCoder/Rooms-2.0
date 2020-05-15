@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
 
 namespace Rooms.Models
 {
@@ -91,14 +92,14 @@ namespace Rooms.Models
                 room = room
             };
         }
-        public ActiveRoom ConnectUser(long ownerId, long userId, string guid, string name, string icon, string connectionId, long roomId, byte limit)
+        public ActiveRoom ConnectUser(IPAddress ipAddress, long ownerId, long userId, string guid, string name, string icon, string connectionId, long roomId, byte limit)
         {
             ActiveRoom room = _activeRooms.GetOrAdd(roomId, new ActiveRoom(roomId, ownerId));
             lock (room)
             {
                 var user = room.User(userId, guid);
                 if (user == null && room.Online >= limit) return null;
-                room.AddUser(connectionId, name, icon, userId, guid);
+                room.AddUser(ipAddress, connectionId, name, icon, userId, guid);
                 _activeUsers[connectionId] = roomId;
             }
             return room;

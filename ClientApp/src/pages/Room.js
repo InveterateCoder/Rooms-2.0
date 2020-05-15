@@ -152,8 +152,6 @@ export class Room extends Component {
         this.connection.on("candidate", this.candidate);
         this.connection.on("voiceCount", count => this.setState({ voiceOnline: count }));
         this.connection.on("logout", this.logout);
-        this.connection.on("mute", this.mute);
-        this.connection.on("ban", this.ban);
         this.menu = React.createRef();
         this.msgpanel = React.createRef();
         this.toastsRef = React.createRef();
@@ -183,14 +181,6 @@ export class Room extends Component {
     }
     clearMessages = (from, till) => {
         this.connection.invoke("ClearMessages", from ? from : 0, till ? till : 0).then(() => alert(text.clearDatabase));
-    }
-    mute = mins => {
-        this.context.setM(this.state.roomId, mins);
-        alert(`${text.muted} ${mins} ${text.min}`);
-    }
-    ban = mins => {
-        this.context.setB(this.state.roomId, mins);
-        this.fail(null, `${text.banned} ${mins} ${text.min}`);
     }
     setupRTCPeerConnection = connectionId => {
         let conn = new RTCPeerConnection({
@@ -420,22 +410,6 @@ export class Room extends Component {
                     voiceOnline: data.payload.voiceUserCount,
                     isAdmin: data.payload.isAdmin
                 }, () => {
-                    if (this.context.setb.includes(this.state.roomId)) {
-                        let banTime = Number.parseInt(localStorage.getItem(this.state.roomId + '_b'));
-                        if (!banTime) this.context.remB(this.state.roomId);
-                        else {
-                            let time = Date.now();
-                            if (time < banTime) {
-                                let diff = banTime - time;
-                                let mins = Math.floor(diff / 60000);
-                                let secs = Math.ceil((diff % 60000) / 1000);
-                                this.fail(null, `${text.bannedRemains} ${mins}${text.m} : ${secs}${text.s}`);
-                                return;
-                            } else {
-                                this.context.remB(this.state.roomId);
-                            }
-                        }
-                    }
                     let length = data.payload.messages.length;
                     if (length < this.msgsCount)
                         this.oldestMsgTime = null;
@@ -708,19 +682,6 @@ export class Room extends Component {
         if (!ev.isTrusted) {
             alert("Automation is not allowed here!");
             return;
-        }
-        if (this.context.setm.includes(this.state.roomId)) {
-            let banTime = Number.parseInt(localStorage.getItem(this.state.roomId + '_m'));
-            let time = Date.now();
-            if (time < banTime) {
-                let diff = banTime - time;
-                let mins = Math.floor(diff / 60000);
-                let secs = Math.ceil((diff % 60000) / 1000);
-                alert(`${text.mutedRemains} ${mins}${text.m} : ${secs}${text.s}`);
-                return;
-            } else {
-                this.context.remM(this.state.roomId);
-            }
         }
         if (!this.canSendMessage) return;
         let val = this.inputRef.current.value.trim();

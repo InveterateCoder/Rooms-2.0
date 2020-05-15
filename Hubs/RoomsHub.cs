@@ -116,7 +116,8 @@ namespace Rooms.Hubs
                         return new ReturnSignal<RoomInfo> { Code = "password" };
                     }
                     else _state._waitingPassword.TryRemove(Context.ConnectionId, out _);
-                    ActiveRoom active = _state.ConnectUser(room.UserId, id.UserId, id.Guest, id.Name, icon, Context.ConnectionId, room.RoomId, room.Limit);
+                    var ip = Context.GetHttpContext().Connection.RemoteIpAddress;
+                    ActiveRoom active = _state.ConnectUser(ip, room.UserId, id.UserId, id.Guest, id.Name, icon, Context.ConnectionId, room.RoomId, room.Limit);
                     if (active == null) return new ReturnSignal<RoomInfo> { Code = "limit" };
                     RoomInfo info = new RoomInfo()
                     {
