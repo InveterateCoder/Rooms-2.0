@@ -7,6 +7,12 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Rooms.Models
 {
+    public enum MessageStatus
+    {
+        Ok,
+        Warn,
+        Ban
+    }
     public class ActiveRoom
     {
         private readonly ConcurrentDictionary<long, ActiveUser> _registered_users = new ConcurrentDictionary<long, ActiveUser>();
@@ -190,13 +196,36 @@ namespace Rooms.Models
                     return _messages.Count();
             }
         }
-        public InMemoryMessage AddMessage(long roomId, string connectionId, string message, long[] accessIds, long id, string guid)
+        public (InMemoryMessage message, MessageStatus status) AddMessage(long roomId,
+            string connectionId, string message, long[] accessIds, long id, string guid)
         {
-            var time = DateTime.UtcNow.Ticks;
+            var status = MessageStatus.Ok;
+            var time = DateTime.UtcNow;
             ActiveUser user = UserByConnectionId(connectionId);
-            var msg = new InMemoryMessage(roomId, id, guid, time, user.name, user.icon, accessIds, message);
-            lock (_messages) _messages.Add(time, msg);
-            return msg;
+            if (time - user._lastMessageTime < TimeSpan.FromSeconds(2) || user._lastMessage.Equals(message))
+            {
+                user._hits++;
+                if (user._hits > 2)
+                {
+                    if (user._warned)
+                        status = MessageStatus.Ban;
+                    else
+                    {
+                        status = MessageStatus.Warn;
+                        user._warned = true;
+                    }
+                }
+            }
+            else user._hits = 0;
+            user._lastMessageTime = time;
+            user._lastMessage = message;
+            InMemoryMessage msg = null;
+            if (status == MessageStatus.Ok)
+            {
+                msg = new InMemoryMessage(roomId, id, guid, time.Ticks, user.name, user.icon, accessIds, message);
+                lock (_messages) _messages.Add(time.Ticks, msg);
+            }
+            return (msg, status);
         }
         public IEnumerable<RoomsMsg> GetMessages(long id, string guid)
         {
@@ -249,12 +278,20 @@ namespace Rooms.Models
         public string voiceConnection;
         public string icon;
         public string name;
+        public string _lastMessage;
+        public DateTime _lastMessageTime;
+        public bool _warned;
+        public int _hits;
         public ActiveUser(string icon, string name, IPAddress ipAddress)
         {
             this.icon = icon;
             this.name = name;
             this.ipAddress = ipAddress;
             this.connections = new ConcurrentDictionary<string, HubCallerContext>();
+            _lastMessage = "";
+            _lastMessageTime = DateTime.UtcNow;
+            _warned = false;
+            _hits = 0;
         }
         public void AddConnection(string connectionId, HubCallerContext context) =>
             connections[connectionId] = context;

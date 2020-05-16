@@ -63,7 +63,9 @@ const text = new LocalizedStrings({
         banned: "You have been banned by the Admin for",
         bannedRemains: "You have been banned. Time remains:",
         min: "min",
-        loggedOut: "You have logged out."
+        loggedOut: "You have logged out.",
+        spamwarn: "🛑 Spamming and flooding are highly prohibited here. Please, slow down! 😢",
+        spamban: "🚫 You have been distanced from Rooms for 5 minutes for spamming. Please, be patient. 😟"
     },
     ru: {
         placeholder: "Введите сообщение ...",
@@ -98,12 +100,14 @@ const text = new LocalizedStrings({
         banned: "Вы были забанены администратором на",
         bannedRemains: "Вы были забанены. Остаётся времени:",
         min: "мин",
-        loggedOut: "Вы вышли из системы."
+        loggedOut: "Вы вышли из системы.",
+        spamwarn: "🛑 Спам и флуд здесь строго запрещены. Пожалуйста, помедленнее! 😢",
+        spamban: "🚫 Вы были отлучены от комнат на 5 минут из-за рассылки спама. Пожалуйста, будьте терпеливы. 😟"
     }
 })
 let wrong = text.wrong;
-let bmin = null;
-let bsec = null;
+let bmin = "";
+let bsec = "";
 export class Room extends Component {
     static contextType = Context;
     constructor(props, context) {
@@ -159,6 +163,8 @@ export class Room extends Component {
         this.connection.on("ban", this.ban);
         this.connection.on("mute", this.mute);
         this.connection.on("logout", this.llogout);
+        this.connection.on("spamwarn", this.spamwarn);
+        this.connection.on("spamban", this.spamban);
         this.menu = React.createRef();
         this.msgpanel = React.createRef();
         this.toastsRef = React.createRef();
@@ -199,6 +205,12 @@ export class Room extends Component {
             bsec = time.match(/ sec:(\d+)$/)[1];
 
         } else wrong = `${text.banned} ${mins} ${text.min}`;
+    }
+    spamwarn = () => {
+        alert(text.spamwarn);
+    }
+    spamban = () => {
+        wrong = text.spamban;
     }
     setupRTCPeerConnection = connectionId => {
         let conn = new RTCPeerConnection({
@@ -762,7 +774,8 @@ export class Room extends Component {
             if (msg && msg.length > 0) {
                 let min = msg.match(/^min:(\d+) /);
                 let sec = msg.match(/ sec:(\d+)$/);
-                setTimeout(() => alert(`${text.mutedRemains} ${min[1]}${text.m} : ${sec[1]}${text.s}`), 200);
+                if (min && sec)
+                    setTimeout(() => alert(`${text.mutedRemains} ${min[1]}${text.m} : ${sec[1]}${text.s}`), 200);
             }
         });
     }

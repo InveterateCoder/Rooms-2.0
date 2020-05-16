@@ -14,6 +14,7 @@ namespace Rooms.Models
         private readonly ConcurrentDictionary<string, long> _activeUsers = new ConcurrentDictionary<string, long>();
         public readonly ConcurrentDictionary<string, (long id, string guid, HubCallerContext context)> _waitingPassword = new ConcurrentDictionary<string, (long, string, HubCallerContext)>();
         public readonly ConcurrentDictionary<long, List<UserBanInfo>> _banInfo = new ConcurrentDictionary<long, List<UserBanInfo>>();
+        public readonly List<UserBanInfo> _globalBanInfo = new List<UserBanInfo>();
         private (BanType type, TimeSpan remains) IsBanned(long roomId, IPAddress ip, long id, string guid)
         {
             List<UserBanInfo> banList;
@@ -46,6 +47,28 @@ namespace Rooms.Models
                 banner.Type = type;
             }
             else banList.Add(new UserBanInfo(id, guid, ip, type, minutes));
+        }
+        public ICollection<HubCallerContext> AddGlobalBan(string connectionId, IPAddress ip, long id, string guid, int minutes = 5)
+        {
+            var banner = _globalBanInfo.Find(b => b.IsUser(ip, id, guid));
+            if (banner != null)
+                banner.ResetTime(minutes);
+            else _globalBanInfo.Add(new UserBanInfo(id, guid, ip, BanType.Ban, minutes));
+            var room = GetRoom(connectionId);
+            if (room != null)
+                return room.GetUserHubContexts(id, guid);
+            return null;
+        }
+        public bool IsGloballyBanned(IPAddress ip, long id, string guid)
+        {
+            var banner = _globalBanInfo.Find(b => b.IsUser(ip, id, guid));
+            if (banner != null)
+            {
+                if (banner.IsActive)
+                    return true;
+                else _globalBanInfo.Remove(banner);
+            }
+            return false;
         }
         public int RoomsCount { get => _activeRooms.Count; }
         public IEnumerable<long> RoomsKeys { get => _activeRooms.Keys; }
@@ -160,20 +183,24 @@ namespace Rooms.Models
                 }
                 else
                 {
-                    var msg = room.AddMessage(room.roomId, connectionId, message, accessIds, id, guid);
-                    usrMsg.connectionIds = room.GetConnections(connectionId: connectionId, ids: accessIds);
-                    usrMsg.message = new RoomsMsg
+                    var msginfo = room.AddMessage(room.roomId, connectionId, message, accessIds, id, guid);
+                    if (msginfo.status == MessageStatus.Ok)
                     {
-                        UserId = msg.userId,
-                        UserGuid = msg.userGuid,
-                        Time = msg.timeStamp,
-                        Icon = msg.senderIcon,
-                        Secret = accessIds != null,
-                        Sender = msg.senderName,
-                        Text = msg.text
-                    };
-                    usrMsg.room = room;
-                    usrMsg.status = UserMsg.Status.Ok;
+                        usrMsg.connectionIds = room.GetConnections(connectionId: connectionId, ids: accessIds);
+                        usrMsg.message = new RoomsMsg
+                        {
+                            UserId = msginfo.message.userId,
+                            UserGuid = msginfo.message.userGuid,
+                            Time = msginfo.message.timeStamp,
+                            Icon = msginfo.message.senderIcon,
+                            Secret = accessIds != null,
+                            Sender = msginfo.message.senderName,
+                            Text = msginfo.message.text
+                        };
+                        usrMsg.room = room;
+                    }
+                    usrMsg.status = msginfo.status == MessageStatus.Ok ? UserMsg.Status.Ok
+                        : msginfo.status == MessageStatus.Warn ? UserMsg.Status.Warn : UserMsg.Status.Ban;
                 }
             }
             return usrMsg;
@@ -240,7 +267,7 @@ namespace Rooms.Models
     {
         public enum Status
         {
-            Ok, NoRoom, Muted, Banned
+            Ok, NoRoom, Muted, Warn, Ban, Banned
         }
         public Status status;
         public TimeSpan timeRemains;

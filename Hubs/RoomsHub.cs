@@ -67,13 +67,27 @@ namespace Rooms.Hubs
                                 await Clients.Clients(data.connectionIds).SendAsync("recieveMessage", data.message);
                             if (data.room.MsgCount > 50) await SaveRoom(data.room);
                             break;
+                        case UserMsg.Status.Muted:
+                            throw new HubException($"min:{(int)data.timeRemains.TotalMinutes} sec:{data.timeRemains.Seconds}");
+                        case UserMsg.Status.Warn:
+                            await Clients.Caller.SendAsync("spamwarn");
+                            break;
+                        case UserMsg.Status.Ban:
+                            var contexts = _state.AddGlobalBan(Context.ConnectionId,
+                                Context.GetHttpContext().Connection.RemoteIpAddress, id.UserId, id.Guest);
+                            if (contexts != null)
+                            {
+                                await Clients.Clients(contexts.Select(c => c.ConnectionId).ToList()).SendAsync("spamban");
+                                foreach (var context in contexts)
+                                    context.Abort();
+                            }
+                            else Context.Abort();
+                            break;
                         case UserMsg.Status.Banned:
                             Context.Abort();
                             break;
                         case UserMsg.Status.NoRoom:
                             throw new HubException("Something went terribly wrong.");
-                        case UserMsg.Status.Muted:
-                            throw new HubException($"min:{(int)data.timeRemains.TotalMinutes} sec:{data.timeRemains.Seconds}");
                     }
                 });
         }
@@ -253,6 +267,15 @@ namespace Rooms.Hubs
                 await _context.SaveChangesAsync();
             });
         }
+        public async override Task OnConnectedAsync()
+        {
+            await Task.Run(() =>
+            {
+                Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
+                if (_state.IsGloballyBanned(Context.GetHttpContext().Connection.RemoteIpAddress, id.UserId, id.Guest))
+                    Context.Abort();
+            });
+        }
         public async override Task OnDisconnectedAsync(Exception exception)
         {
             await Task.Run(async () =>
@@ -275,7 +298,27 @@ namespace Rooms.Hubs
                                     new RoomsUser { Id = id.UserId, Guid = id.Guest, Icon = null, Name = id.Name });
                         }
                     }
-                    else await SaveRoom(data.room);
+                    else
+                    {
+                        await SaveRoom(data.room);
+                        List<UserBanInfo> roomBanInfo;
+                        List<UserBanInfo> removeBanInfo = new List<UserBanInfo>();
+                        _state._banInfo.TryGetValue(data.room.roomId, out roomBanInfo);
+                        if (roomBanInfo != null)
+                        {
+                            foreach (var info in roomBanInfo)
+                            {
+                                if (!info.IsActive)
+                                    removeBanInfo.Add(info);
+
+                            }
+                            if (removeBanInfo.Count > 0)
+                                foreach (var info in removeBanInfo)
+                                    roomBanInfo.Remove(info);
+                            if (roomBanInfo.Count == 0)
+                                _state._banInfo.Remove(data.room.roomId, out _);
+                        }
+                    }
                 }
             });
             await base.OnDisconnectedAsync(exception);
