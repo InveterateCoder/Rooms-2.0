@@ -315,8 +315,12 @@ namespace Rooms.Hubs
             {
                 Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
                 if (_state.IsGloballyBanned(Context.GetHttpContext().Connection.RemoteIpAddress, id.UserId, id.Guest))
+                {
                     Context.Abort();
+                    return;
+                }
             });
+            await base.OnConnectedAsync();
         }
         public async override Task OnDisconnectedAsync(Exception exception)
         {
