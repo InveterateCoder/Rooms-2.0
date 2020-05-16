@@ -31,7 +31,7 @@ namespace Rooms.Controllers
             _hub = hub;
         }
         [HttpPost("change")]
-        public async Task<IActionResult> Change([FromBody]RoomForm form)
+        public async Task<IActionResult> Change([FromBody] RoomForm form)
         {
             try
             {
@@ -91,9 +91,19 @@ namespace Rooms.Controllers
                 if (id.Guest != null) return Forbid();
                 var room = await _context.Rooms.FirstOrDefaultAsync(r => r.UserId == id.UserId);
                 if (room == null) return BadRequest(Errors.NoRoom);
-                var connectionIds = _state.RemoveRoom(room.RoomId);
-                if (connectionIds != null)
-                    await _hub.Clients.Clients(connectionIds).SendAsync("roomDeleted");
+                var connections = _state.RemoveRoom(room.RoomId);
+                if (connections != null)
+                {
+                    try
+                    {
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).ToArray()).SendAsync("roomDeleted");
+                    }
+                    finally
+                    {
+                        foreach (var connection in connections)
+                            connection.Abort();
+                    }
+                }
                 _context.Rooms.Remove(room);
                 await _context.SaveChangesAsync();
                 return Ok("ok");

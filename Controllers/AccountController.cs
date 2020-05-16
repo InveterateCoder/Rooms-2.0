@@ -31,7 +31,7 @@ namespace Rooms.Controllers
             _hub = hub;
         }
         [HttpPost("change")]
-        public async Task<IActionResult> Change([FromBody]UserChangeForm form)
+        public async Task<IActionResult> Change([FromBody] UserChangeForm form)
         {
             try
             {
@@ -69,9 +69,19 @@ namespace Rooms.Controllers
                 if (user == null) return BadRequest(Errors.NotRegistered);
                 if (user.Room != null)
                 {
-                    var connectionIds = _state.RemoveRoom(user.Room.RoomId);
-                    if (connectionIds != null)
-                        await _hub.Clients.Clients(connectionIds).SendAsync("roomDeleted");
+                    var contexts = _state.RemoveRoom(user.Room.RoomId);
+                    if (contexts != null)
+                    {
+                        try
+                        {
+                            await _hub.Clients.Clients(contexts.Select(c => c.ConnectionId).ToArray()).SendAsync("roomDeleted");
+                        }
+                        finally
+                        {
+                            foreach (var context in contexts)
+                                context.Abort();
+                        }
+                    }
                 }
                 var connections = _state.UserConnections(id.UserId);
                 if (connections.Count() > 0)
@@ -138,10 +148,20 @@ namespace Rooms.Controllers
             await Task.Run(async () =>
             {
                 Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
-                var connectionIds = _state.UserConnections(id.UserId, id.Guest);
-                if (connectionIds.Length > 0)
-                    await _hub.Clients.Clients(connectionIds.Concat(_state._waitingPassword.Where(p =>
-                        p.Value == (id.UserId, id.Guest)).Select(p => p.Key)).ToArray()).SendAsync("logout");
+                var connections = _state.UserConnectionContexts(id.UserId, id.Guest);
+                if (connections.Count() > 0)
+                {
+                    var waiting = _state._waitingPassword.Where(p => p.Value.id == id.UserId && p.Value.guid == id.Guest);
+                    try
+                    {
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).Concat(waiting.Select(p => p.Key)).ToArray()).SendAsync("logout");
+                    }
+                    finally
+                    {
+                        foreach (var connection in connections.Concat(waiting.Select(p => p.Value.context)))
+                            connection.Abort();
+                    }
+                }
             });
             return Ok("ok");
         }

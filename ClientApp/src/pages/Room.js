@@ -62,7 +62,8 @@ const text = new LocalizedStrings({
         userBanned: "User has been successfully banned.",
         banned: "You have been banned by the Admin for",
         bannedRemains: "You have been banned. Time remains:",
-        min: "min"
+        min: "min",
+        loggedOut: "You have logged out."
     },
     ru: {
         placeholder: "Введите сообщение ...",
@@ -96,7 +97,8 @@ const text = new LocalizedStrings({
         userBanned: "Пользователь был успешно забанен.",
         banned: "Вы были забанены администратором на",
         bannedRemains: "Вы были забанены. Остаётся времени:",
-        min: "мин"
+        min: "мин",
+        loggedOut: "Вы вышли из системы."
     }
 })
 let wrong = text.wrong;
@@ -156,7 +158,7 @@ export class Room extends Component {
         this.connection.on("voiceCount", count => this.setState({ voiceOnline: count }));
         this.connection.on("ban", this.ban);
         this.connection.on("mute", this.mute);
-        this.connection.on("logout", this.logout);
+        this.connection.on("logout", this.llogout);
         this.menu = React.createRef();
         this.msgpanel = React.createRef();
         this.toastsRef = React.createRef();
@@ -318,8 +320,12 @@ export class Room extends Component {
             });
         }
     }
+    llogout = () => {
+        wrong = text.loggedOut;
+    }
     logout = () => {
         this.connection.stop().then(() => {
+            debugger;
             for (let key in this.voiceAudios) {
                 this.voiceAudios[key].pause();
                 delete this.voiceAudios[key];
@@ -784,8 +790,7 @@ export class Room extends Component {
             this.soundMsg.play().catch(() => { });
     }
     roomDeleted = () => {
-        this.connection.stop();
-        this.fail(null, text.deleted);
+        wrong = text.deleted;
     }
     userRemoved = () => {
         this.connection.stop();

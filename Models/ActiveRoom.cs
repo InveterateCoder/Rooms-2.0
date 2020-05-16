@@ -127,7 +127,7 @@ namespace Rooms.Models
             }
             return Enumerable.Empty<string>();
         }
-        public ICollection<HubCallerContext> GetUserHubContexts(long userId, string guid)
+        public ICollection<HubCallerContext> GetUserHubContexts(long userId = 0, string guid = null)
         {
             if (userId != 0)
             {
@@ -138,6 +138,11 @@ namespace Rooms.Models
             {
                 var result = _guest_users.GetValueOrDefault(guid);
                 if (result != null) return result.connections.Values;
+            }
+            else
+            {
+                return _registered_users.Values.SelectMany(u => u.GetUserHubContexts)
+                    .Concat(_guest_users.Values.SelectMany(u => u.GetUserHubContexts)).ToList();
             }
             return null;
         }

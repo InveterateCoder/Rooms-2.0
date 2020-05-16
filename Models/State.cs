@@ -12,7 +12,7 @@ namespace Rooms.Models
     {
         private readonly ConcurrentDictionary<long, ActiveRoom> _activeRooms = new ConcurrentDictionary<long, ActiveRoom>();
         private readonly ConcurrentDictionary<string, long> _activeUsers = new ConcurrentDictionary<string, long>();
-        public readonly ConcurrentDictionary<string, (long, string)> _waitingPassword = new ConcurrentDictionary<string, (long, string)>();
+        public readonly ConcurrentDictionary<string, (long id, string guid, HubCallerContext context)> _waitingPassword = new ConcurrentDictionary<string, (long, string, HubCallerContext)>();
         public readonly ConcurrentDictionary<long, List<UserBanInfo>> _banInfo = new ConcurrentDictionary<long, List<UserBanInfo>>();
         private (BanType type, TimeSpan remains) IsBanned(long roomId, IPAddress ip, long id, string guid)
         {
@@ -106,6 +106,8 @@ namespace Rooms.Models
 
         public string[] UserConnections(long userId, string guid = null) =>
             _activeRooms.Values.Where(r => r.User(userId, guid) != null).SelectMany(r => r.GetUserConnections(userId, guid)).ToArray();
+        public IEnumerable<HubCallerContext> UserConnectionContexts(long userId, string guid) =>
+            _activeRooms.Values.Where(r => r.User(userId, guid) != null).SelectMany(r => r.GetUserHubContexts(userId, guid));
         public string[] Connections(long roomId) => _activeRooms.GetValueOrDefault(roomId)?.GetConnections();
         public string[] Connections(string connectionId) => this.Connections(this._activeUsers[connectionId]);
         public string[] ChangeUser(long userId, string name = null, string icon = null)
@@ -126,19 +128,21 @@ namespace Rooms.Models
         }
         public IEnumerable<RoomsMsg> GetOlderMsgs(long userId, string guid, long time, string connectionId) =>
             _activeRooms[_activeUsers[connectionId]].GetMessages(userId, guid).Where(m => m.Time < time);
-        public string[] RemoveRoom(long roomId)
+        public IEnumerable<HubCallerContext> RemoveRoom(long roomId)
         {
             ActiveRoom room = null;
+            IEnumerable<HubCallerContext> contexts = null;
             if (_activeRooms.Remove(roomId, out room))
             {
                 lock (room)
                 {
+                    contexts = room.GetUserHubContexts();
                     var users = _activeUsers.Where(u => u.Value == roomId);
                     foreach (var user in users)
                         _activeUsers.Remove(user.Key, out _);
                 }
             }
-            return room?.GetConnections();
+            return contexts;
         }
         public UserMsg SendMessage(string connectionId, string message, long[] accessIds, long id, string guid)
         {

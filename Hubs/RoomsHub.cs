@@ -125,7 +125,7 @@ namespace Rooms.Hubs
                     if (!isAdmin && room.Password != password)
                     {
                         if (!_state._waitingPassword.ContainsKey(Context.ConnectionId))
-                            _state._waitingPassword[Context.ConnectionId] = (id.UserId, id.Guest);
+                            _state._waitingPassword[Context.ConnectionId] = (id.UserId, id.Guest, Context);
                         return new ReturnSignal<RoomInfo> { Code = "password" };
                     }
                     else _state._waitingPassword.TryRemove(Context.ConnectionId, out _);
