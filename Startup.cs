@@ -45,7 +45,7 @@ namespace Rooms
             {
                 configuration.RootPath = "ClientApp/build";
             });
-            services.AddSignalR();
+            services.AddSignalR().AddAzureSignalR(settings.SignalREndpoint);
             services.AddDbContext<RoomsDBContext>(opts => opts.UseMySql(settings.DBString));
             var key = Encoding.ASCII.GetBytes(settings.Secret);
             services.AddAuthentication(opts =>
