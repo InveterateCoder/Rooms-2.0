@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Context } from "../data/Context";
 import { Preloader } from "../Preloader";
 import { Menu } from "./accessories/Room/Menu";
-import { Toast } from "react-bootstrap";
+import { Toast, DropdownButton } from "react-bootstrap";
 import Flag from "react-flags";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faAngleLeft, faInfoCircle, faExclamationTriangle, faSignInAlt, faArrowCircleDown, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
@@ -99,6 +99,9 @@ const text = new LocalizedStrings({
         min: "мин"
     }
 })
+let wrong = text.wrong;
+let bmin = null;
+let bsec = null;
 export class Room extends Component {
     static contextType = Context;
     constructor(props, context) {
@@ -136,7 +139,7 @@ export class Room extends Component {
         this.oldestMsgTime = null;
         this.connection = new signalR.HubConnectionBuilder().withUrl("/hubs/rooms",
             { accessTokenFactory: () => context.jwt }).configureLogging(signalR.LogLevel.Error).build();
-        this.connection.onclose(() => this.fail(text.wrong));
+        this.connection.onclose(() => this.fail(wrong));
         this.connection.on("addUser", this.addUser);
         this.connection.on("removeUser", this.removeUser);
         this.connection.on("recieveMessage", this.recieveMessage);
@@ -151,6 +154,8 @@ export class Room extends Component {
         this.connection.on("answer", this.answer);
         this.connection.on("candidate", this.candidate);
         this.connection.on("voiceCount", count => this.setState({ voiceOnline: count }));
+        this.connection.on("ban", this.ban);
+        this.connection.on("mute", this.mute);
         this.connection.on("logout", this.logout);
         this.menu = React.createRef();
         this.msgpanel = React.createRef();
@@ -181,6 +186,17 @@ export class Room extends Component {
     }
     clearMessages = (from, till) => {
         this.connection.invoke("ClearMessages", from ? from : 0, till ? till : 0).then(() => alert(text.clearDatabase));
+    }
+    mute = mins => {
+        alert(`${text.muted} ${mins} ${text.min}`);
+    }
+    ban = time => {
+        let mins = Number(time);
+        if (!mins) {
+            bmin = time.match(/^min:(\d+) /)[1];
+            bsec = time.match(/ sec:(\d+)$/)[1];
+
+        } else wrong = `${text.banned} ${mins} ${text.min}`;
     }
     setupRTCPeerConnection = connectionId => {
         let conn = new RTCPeerConnection({
@@ -430,6 +446,9 @@ export class Room extends Component {
             case "noroom":
                 this.fail(null, text.noroom);
                 break;
+            case "banned":
+                alert("Banned");
+                break;
             default:
                 this.fail(data.code || text.wrong);
         }
@@ -565,7 +584,14 @@ export class Room extends Component {
             }
         });
         if (connectedMsgs.length > 0) {
-            this.msgpanel.current.insertBefore(this.formMessage(connectedMsgs.reverse(), today), this.msgpanel.current.firstChild);
+            let elem = this.formMessage(connectedMsgs.reverse(), today);
+            if (!this.lastMessage.elem) {
+                this.lastMessage.userId = connectedMsgs[0].userId;
+                this.lastMessage.userGuid = connectedMsgs[0].userGuid;
+                this.lastMessage.time = connectedMsgs[connectedMsgs.length - 1].time;
+                this.lastMessage.elem = elem;
+            }
+            this.msgpanel.current.insertBefore(elem, this.msgpanel.current.firstChild);
             connectedMsgs = [];
         }
     }
@@ -588,6 +614,7 @@ export class Room extends Component {
         el.appendChild(pre);
         if (scroll)
             document.scrollingElement.scrollTo(0, document.scrollingElement.scrollHeight);
+        return pre;
     }
     appendMessage = (msg, scroll) => {
         this.msgpanel.current.appendChild(msg);
@@ -707,8 +734,9 @@ export class Room extends Component {
             text: val,
             time: Date.now() * 10000 + 621355968000000000
         }
+        let pre;
         if (this.lastMessage.userId === this.context.userId && this.lastMessage.userGuid === this.context.userGuid) {
-            this.mergeMessage(msg, true)
+            pre = this.mergeMessage(msg, true)
         } else {
             let element = this.formMessage(msg, null, true);
             this.lastMessage.userId = this.context.userId;
@@ -716,10 +744,21 @@ export class Room extends Component {
             this.lastMessage.time = msg.time;
             this.lastMessage.elem = element;
             this.appendMessage(element, true);
+            let pres = element.getElementsByTagName("pre");
+            pre = pres[pres.length - 1];
         }
         this.canSendMessage = false;
         setTimeout(() => this.canSendMessage = true, 700);
-        this.connection.invoke("SendMessage", val, ids).catch(err => this.fail(err.message || text.wrong));
+        this.connection.invoke("SendMessage", val, ids).catch(err => {
+            pre.style.opacity = "0.3";
+            let str = "HubException: ";
+            let msg = err.message.substring(err.message.indexOf(str) + str.length);
+            if (msg && msg.length > 0) {
+                let min = msg.match(/^min:(\d+) /);
+                let sec = msg.match(/ sec:(\d+)$/);
+                setTimeout(() => alert(`${text.mutedRemains} ${min[1]}${text.m} : ${sec[1]}${text.s}`), 200);
+            }
+        });
     }
     msgInputKeyPressed = ev => {
         if (ev.which === 13) {
@@ -934,11 +973,13 @@ export class Room extends Component {
         try {
             await this.connection.start();
             let data = await this.connection.invoke("Enter", this.props.match.params["room"],
-                this.state.icon, null, this.msgsCount).catch(err => alert(err.message));
+                this.state.icon, null, this.msgsCount);
             this.processEnter(data);
         }
         catch (err) {
-            this.setState({ failed: err.message });
+            if (bmin != null && bsec != null)
+                this.setState({ warning: `${text.bannedRemains} ${bmin}${text.m} : ${bsec}${text.s}` })
+            else this.setState({ failed: err.message });
         }
     }
     componentWillUnmount() {

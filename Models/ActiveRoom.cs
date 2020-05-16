@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Rooms.Models
 {
@@ -37,11 +38,11 @@ namespace Rooms.Models
                     _messages.Remove(key);
             }
         }
-        public void AddUser(IPAddress ipAddress, string connectionId, string name, string icon, long id, string guid)
+        public void AddUser(IPAddress ipAddress, HubCallerContext context, string connectionId, string name, string icon, long id, string guid)
         {
             var user = new ActiveUser(icon, name, ipAddress);
-            if (id != 0) _registered_users.GetOrAdd(id, user).AddConnection(connectionId);
-            else if (guid != null) _guest_users.GetOrAdd(guid, user).AddConnection(connectionId);
+            if (id != 0) _registered_users.GetOrAdd(id, user).AddConnection(connectionId, context);
+            else if (guid != null) _guest_users.GetOrAdd(guid, user).AddConnection(connectionId, context);
             else throw new ArgumentException("Either id or guid must be provided.");
         }
         public byte RemoveUser(ActiveUser user)
@@ -91,38 +92,54 @@ namespace Rooms.Models
         }
         public int GetOpenConnections(long id, string guid)
         {
-            if (id != 0) return _registered_users[id].connectionIds.Count();
-            else if (guid != null) return _guest_users[guid].connectionIds.Count();
+            if (id != 0) return _registered_users[id].connections.Count;
+            else if (guid != null) return _guest_users[guid].connections.Count;
             else throw new ArgumentException("Either id or guid must be provided.");
         }
         public string[] GetConnections(long userId = 0, string guid = null, string connectionId = null, long[] ids = null)
         {
             if (userId != 0) return _registered_users.Where(p => p.Key != userId)
-               .SelectMany(p => p.Value.connectionIds).Concat(_guest_users.Values.SelectMany(u => u.connectionIds)).ToArray();
-            else if (guid != null) return _registered_users.Values.SelectMany(u => u.connectionIds).Concat(_guest_users
-                .Where(p => p.Key != guid).SelectMany(p => p.Value.connectionIds)).ToArray();
+               .SelectMany(p => p.Value.connections.Keys).Concat(_guest_users.Values.SelectMany(u => u.connections.Keys)).ToArray();
+            else if (guid != null) return _registered_users.Values.SelectMany(u => u.connections.Keys).Concat(_guest_users
+                .Where(p => p.Key != guid).SelectMany(p => p.Value.connections.Keys)).ToArray();
             else if (connectionId != null)
             {
                 if (ids != null)
                     return _registered_users.Where(p => ids.Contains(p.Key))
-                        .SelectMany(p => p.Value.connectionIds).Where(id => id != connectionId).ToArray();
+                        .SelectMany(p => p.Value.connections.Keys).Where(id => id != connectionId).ToArray();
                 else
                     return _registered_users.Values.Concat(_guest_users.Values)
-                        .SelectMany(u => u.connectionIds).Where(id => id != connectionId).ToArray();
+                        .SelectMany(u => u.connections.Keys).Where(id => id != connectionId).ToArray();
             }
-            else return _registered_users.Values.Concat(_guest_users.Values).SelectMany(u => u.connectionIds).ToArray();
+            else return _registered_users.Values.Concat(_guest_users.Values).SelectMany(u => u.connections.Keys).ToArray();
         }
         public IEnumerable<string> GetUserConnections(long userId, string guid)
         {
-            if (userId != 0) {
+            if (userId != 0)
+            {
                 var result = _registered_users.GetValueOrDefault(userId);
-                if(result != null) return result.connectionIds;
+                if (result != null) return result.connections.Keys;
             }
-            else if (guid != null) {
+            else if (guid != null)
+            {
                 var result = _guest_users.GetValueOrDefault(guid);
-                if(result != null) return result.connectionIds;
+                if (result != null) return result.connections.Keys;
             }
             return Enumerable.Empty<string>();
+        }
+        public ICollection<HubCallerContext> GetUserHubContexts(long userId, string guid)
+        {
+            if (userId != 0)
+            {
+                var result = _registered_users.GetValueOrDefault(userId);
+                if (result != null) return result.connections.Values;
+            }
+            else if (guid != null)
+            {
+                var result = _guest_users.GetValueOrDefault(guid);
+                if (result != null) return result.connections.Values;
+            }
+            return null;
         }
         public IEnumerable<RoomsUser> Users(long id = 0, string guid = null)
         {
@@ -223,7 +240,7 @@ namespace Rooms.Models
     public class ActiveUser
     {
         public IPAddress ipAddress;
-        public List<string> connectionIds;
+        public ConcurrentDictionary<string, HubCallerContext> connections;
         public string voiceConnection;
         public string icon;
         public string name;
@@ -232,26 +249,19 @@ namespace Rooms.Models
             this.icon = icon;
             this.name = name;
             this.ipAddress = ipAddress;
-            this.connectionIds = new List<string>();
+            this.connections = new ConcurrentDictionary<string, HubCallerContext>();
         }
-        public void AddConnection(string connectionId)
-        {
-            lock (connectionIds)
-                connectionIds.Add(connectionId);
-        }
+        public void AddConnection(string connectionId, HubCallerContext context) =>
+            connections[connectionId] = context;
         public int RemoveConnection(string connectionId)
         {
-            lock (connectionIds)
-            {
-                connectionIds.Remove(connectionId);
-                return connectionIds.Count();
-            }
+            connections.Remove(connectionId, out _);
+            return connections.Count;
         }
-        public bool ContainsConnection(string connectionId)
-        {
-            lock (connectionIds)
-                return connectionIds.Contains(connectionId);
-        }
+        public bool ContainsConnection(string connectionId) =>
+            connections.ContainsKey(connectionId);
+        public ICollection<HubCallerContext> GetUserHubContexts =>
+            connections.Values;
     }
     public class InMemoryMessage
     {

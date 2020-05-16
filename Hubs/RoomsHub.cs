@@ -60,9 +60,21 @@ namespace Rooms.Hubs
                     if (accessIds != null && id.UserId > 0)
                         ids = accessIds.Append(id.UserId);
                     var data = _state.SendMessage(Context.ConnectionId, message, ids?.ToArray(), id.UserId, id.Guest);
-                    if (data.connectionIds.Length > 0)
-                        await Clients.Clients(data.connectionIds).SendAsync("recieveMessage", data.message);
-                    if (data.room.MsgCount > 50) await SaveRoom(data.room);
+                    switch (data.status)
+                    {
+                        case UserMsg.Status.Ok:
+                            if (data.connectionIds.Length > 0)
+                                await Clients.Clients(data.connectionIds).SendAsync("recieveMessage", data.message);
+                            if (data.room.MsgCount > 50) await SaveRoom(data.room);
+                            break;
+                        case UserMsg.Status.Banned:
+                            Context.Abort();
+                            break;
+                        case UserMsg.Status.NoRoom:
+                            throw new HubException("Something went terribly wrong.");
+                        case UserMsg.Status.Muted:
+                            throw new HubException($"min:{(int)data.timeRemains.TotalMinutes} sec:{data.timeRemains.Seconds}");
+                    }
                 });
         }
         public async Task<string[]> ConnectVoice()
@@ -102,6 +114,7 @@ namespace Rooms.Hubs
         {
             try
             {
+                var ip = Context.GetHttpContext().Connection.RemoteIpAddress;
                 if (icon != "man" && icon != "woman" && icon != "user") throw new HubException("Wrong icon name");
                 Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
                 return await Task.Run(async () =>
@@ -116,9 +129,22 @@ namespace Rooms.Hubs
                         return new ReturnSignal<RoomInfo> { Code = "password" };
                     }
                     else _state._waitingPassword.TryRemove(Context.ConnectionId, out _);
-                    var ip = Context.GetHttpContext().Connection.RemoteIpAddress;
-                    ActiveRoom active = _state.ConnectUser(ip, room.UserId, id.UserId, id.Guest, id.Name, icon, Context.ConnectionId, room.RoomId, room.Limit);
-                    if (active == null) return new ReturnSignal<RoomInfo> { Code = "limit" };
+                    ActiveRoomInfo roomInfo = _state.ConnectUser(ip, Context, room.UserId, id.UserId, id.Guest, id.Name, icon, Context.ConnectionId, room.RoomId, room.Limit);
+                    if (roomInfo._status == ActiveRoomInfo.Status.Limit)
+                        return new ReturnSignal<RoomInfo> { Code = "limit" };
+                    if (roomInfo._status == ActiveRoomInfo.Status.Banned)
+                    {
+                        try
+                        {
+                            await Clients.Caller.SendAsync("ban", $"min:{(int)roomInfo._timeRemains.TotalMinutes} sec:{roomInfo._timeRemains.Seconds}");
+                        }
+                        finally
+                        {
+                            Context.Abort();
+                            throw new HubException("Banned");
+                        }
+                    }
+                    ActiveRoom active = roomInfo._room;
                     RoomInfo info = new RoomInfo()
                     {
                         RoomId = room.RoomId,
@@ -180,17 +206,18 @@ namespace Rooms.Hubs
         {
             await Task.Run(async () =>
             {
+                Identity _id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
+                if (_id.UserId == 0 || minutes > 120) throw new HubException("Wrong credentials or argument.");
+                var contexts = _state.BanUser(_id.UserId, Context.ConnectionId, id, guid, minutes);
+                if (contexts == null) throw new HubException("You must be administrator and user must present.");
                 try
                 {
-                    Identity _id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
-                    if (_id.UserId == 0 || minutes > 120) return;
-                    var users = _state.AdministrateUser(_id.UserId, Context.ConnectionId, id, guid);
-                    if (users.Length > 0)
-                        await Clients.Clients(users).SendAsync("ban", minutes);
+                    await Clients.Clients(contexts.Select(c => c.ConnectionId).ToArray()).SendAsync("ban", minutes);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    throw new HubException(ex.Message);
+                    foreach (var context in contexts)
+                        context.Abort();
                 }
             });
         }
@@ -198,18 +225,11 @@ namespace Rooms.Hubs
         {
             await Task.Run(async () =>
             {
-                try
-                {
-                    Identity _id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
-                    if (_id.UserId == 0 || minutes > 120) return;
-                    var users = _state.AdministrateUser(_id.UserId, Context.ConnectionId, id, guid);
-                    if (users.Length > 0)
-                        await Clients.Clients(users).SendAsync("mute", minutes);
-                }
-                catch (Exception ex)
-                {
-                    throw new HubException(ex.Message);
-                }
+                Identity _id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
+                if (_id.UserId == 0 || minutes > 120) throw new HubException("Wrong credentials or argument.");
+                if (!_state.MuteUser(_id.UserId, Context.ConnectionId, id, guid, minutes))
+                    throw new HubException("You must be administrator and user must present.");
+                await Clients.Clients(_state.UserConnections(id, guid).ToArray()).SendAsync("mute", minutes);
             });
         }
         public async Task ClearMessages(long from, long till)

@@ -171,40 +171,9 @@ export default class App extends Component {
                 }
             });
     }
-    setM = (id, min) => {
-        if (min < 2 || min > 120) return;
-        this.setState({ setm: [...this.state.setm, id] },
-            () => {
-                localStorage.setItem('setm', JSON.stringify(this.state.setm));
-                localStorage.setItem(id + '_m', Date.now() + (min * 60000));
-            });
-    }
-    remM = (id) => {
-        this.setState({ setm: this.state.setm.filter(_id => _id !== id) },
-            () => {
-                localStorage.setItem('setm', JSON.stringify(this.state.setm));
-                localStorage.removeItem(id + '_m');
-            });
-    }
-    setB = (id, min) => {
-        if (min < 2 || min > 120) return;
-        this.setState({ setb: [...this.state.setb, id] },
-            () => {
-                localStorage.setItem('setb', JSON.stringify(this.state.setb));
-                localStorage.setItem(id + '_b', Date.now() + min * 60000);
-            });
-    }
-    remB = (id) => {
-        this.setState({ setb: this.state.setb.filter(_id => _id !== id) },
-            () => {
-                localStorage.setItem('setb', JSON.stringify(this.state.setb));
-                localStorage.removeItem(id + '_b');
-            });
-    }
     render() {
         return <Context.Provider value={{
             ...this.state,
-            setB: this.setB, setM: this.setM, remB: this.remB, remM: this.remM,
             signOut: this.signOut, changeFilters: this.changeFilters,
             setLanguage: this.setLanguage, changeAccaunt: this.changeAccaunt,
             changeRoom: this.changeRoom, changeIcon: this.changeIcon,
