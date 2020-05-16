@@ -64,13 +64,21 @@ namespace Rooms.Hubs
                     {
                         case UserMsg.Status.Ok:
                             if (data.connectionIds.Length > 0)
-                                await Clients.Clients(data.connectionIds).SendAsync("recieveMessage", data.message);
+                                try
+                                {
+                                    await Clients.Clients(data.connectionIds).SendAsync("recieveMessage", data.message);
+                                }
+                                catch { };
                             if (data.room.MsgCount > 50) await SaveRoom(data.room);
                             break;
                         case UserMsg.Status.Muted:
                             throw new HubException($"min:{(int)data.timeRemains.TotalMinutes} sec:{data.timeRemains.Seconds}");
                         case UserMsg.Status.Warn:
-                            await Clients.Caller.SendAsync("spamwarn");
+                            try
+                            {
+                                await Clients.Caller.SendAsync("spamwarn");
+                            }
+                            catch { };
                             break;
                         case UserMsg.Status.Ban:
                             var contexts = _state.AddGlobalBan(Context.ConnectionId,
@@ -104,7 +112,11 @@ namespace Rooms.Hubs
                 Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
                 (var voiceUsers, var count) = _state.ConnectVoiceUser(id.UserId, id.Guest, Context.ConnectionId);
                 if (voiceUsers == null) throw new HubException("active");
-                await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                try
+                {
+                    await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                }
+                catch { };
                 return voiceUsers;
             });
         }
@@ -115,20 +127,36 @@ namespace Rooms.Hubs
                 Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
                 var count = _state.DisconnectVoiceUser(id.UserId, id.Guest, Context.ConnectionId);
                 if (count > -1)
-                    await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                    try
+                    {
+                        await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                    }
+                    catch { };
             });
         }
         public async Task PipeCandidate(string connectionId, object candidate)
         {
-            await Clients.Client(connectionId).SendAsync("candidate", Context.ConnectionId, candidate);
+            try
+            {
+                await Clients.Client(connectionId).SendAsync("candidate", Context.ConnectionId, candidate);
+            }
+            catch { };
         }
         public async Task PipeOffer(string connectionId, object offer)
         {
-            await Clients.Client(connectionId).SendAsync("offer", Context.ConnectionId, offer);
+            try
+            {
+                await Clients.Client(connectionId).SendAsync("offer", Context.ConnectionId, offer);
+            }
+            catch { };
         }
         public async Task PipeAnswer(string connectionId, object answer)
         {
-            await Clients.Client(connectionId).SendAsync("answer", Context.ConnectionId, answer);
+            try
+            {
+                await Clients.Client(connectionId).SendAsync("answer", Context.ConnectionId, answer);
+            }
+            catch { };
         }
         public async Task<ReturnSignal<RoomInfo>> Enter(string slug, string icon, string password, int msgsCount)
         {
@@ -207,8 +235,12 @@ namespace Rooms.Hubs
                     {
                         var connectionIds = active.GetConnections(id.UserId, id.Guest);
                         if (connectionIds.Length > 0)
-                            await Clients.Clients(connectionIds)
+                            try
+                            {
+                                await Clients.Clients(connectionIds)
                                 .SendAsync("addUser", new RoomsUser { Id = id.UserId, Guid = id.Guest, Icon = icon, Name = id.Name });
+                            }
+                            catch { };
                     }
                     return new ReturnSignal<RoomInfo>
                     {
@@ -249,7 +281,11 @@ namespace Rooms.Hubs
                 if (_id.UserId == 0 || minutes > 120) throw new HubException("Wrong credentials or argument.");
                 if (!_state.MuteUser(_id.UserId, Context.ConnectionId, id, guid, minutes))
                     throw new HubException("You must be administrator and user must present.");
-                await Clients.Clients(_state.UserConnections(id, guid).ToArray()).SendAsync("mute", minutes);
+                try
+                {
+                    await Clients.Clients(_state.UserConnections(id, guid).ToArray()).SendAsync("mute", minutes);
+                }
+                catch { };
             });
         }
         public async Task ClearMessages(long from, long till)
@@ -288,8 +324,12 @@ namespace Rooms.Hubs
             {
                 Identity id = JsonSerializer.Deserialize<Identity>(Context.User.Identity.Name);
                 var count = _state.DisconnectVoiceUser(id.UserId, id.Guest, Context.ConnectionId);
-                if (count > -1)
-                    await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                try
+                {
+                    if (count > -1)
+                        await Clients.Clients(_state.Connections(Context.ConnectionId)).SendAsync("voiceCount", count);
+                }
+                catch { };
                 _state._waitingPassword.TryRemove(Context.ConnectionId, out _);
                 var data = _state.DisconnectUser(Context.ConnectionId);
                 if (data.room != null)
@@ -300,8 +340,12 @@ namespace Rooms.Hubs
                         {
                             var connectionIds = data.room.GetConnections();
                             if (connectionIds.Length > 0)
-                                await Clients.Clients(connectionIds).SendAsync("removeUser",
-                                    new RoomsUser { Id = id.UserId, Guid = id.Guest, Icon = null, Name = id.Name });
+                                try
+                                {
+                                    await Clients.Clients(connectionIds).SendAsync("removeUser",
+                                        new RoomsUser { Id = id.UserId, Guid = id.Guest, Icon = null, Name = id.Name });
+                                }
+                                catch { };
                         }
                     }
                     else
