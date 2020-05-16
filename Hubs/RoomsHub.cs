@@ -77,9 +77,15 @@ namespace Rooms.Hubs
                                 Context.GetHttpContext().Connection.RemoteIpAddress, id.UserId, id.Guest);
                             if (contexts != null)
                             {
-                                await Clients.Clients(contexts.Select(c => c.ConnectionId).ToList()).SendAsync("spamban");
-                                foreach (var context in contexts)
-                                    context.Abort();
+                                try
+                                {
+                                    await Clients.Clients(contexts.Select(c => c.ConnectionId).ToList()).SendAsync("spamban");
+                                }
+                                finally
+                                {
+                                    foreach (var context in contexts)
+                                        context.Abort();
+                                }
                             }
                             else Context.Abort();
                             break;
