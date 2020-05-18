@@ -9,19 +9,20 @@ namespace Rooms.Models
 {
     public enum MessageStatus
     {
-        Ok,
-        Warn,
-        Ban
+        Ok, Warn, Ban
+    }
+    public enum AddUserStatus
+    {
+        Added, Active, Limit, Failed
     }
     public class ActiveRoom
     {
-        private readonly ConcurrentDictionary<long, ActiveUser> _registered_users = new ConcurrentDictionary<long, ActiveUser>();
-        private readonly ConcurrentDictionary<string, ActiveUser> _guest_users = new ConcurrentDictionary<string, ActiveUser>();
+        private readonly ConcurrentDictionary<string, ActiveUser> _users = new ConcurrentDictionary<string, ActiveUser>();
         private readonly SortedList<long, InMemoryMessage> _messages = new SortedList<long, InMemoryMessage>();
         public long OwnerId { get; set; }
-        public int VoiceUsersCount { get; set; } = 0;
-        public byte Online { get => Convert.ToByte(_registered_users.Count() + _guest_users.Count()); }
         public readonly long roomId;
+        public int Online { get => _users.Count(); }
+        public int VoiceUsersCount { get => _users.Where(p => p.Value._voiceOn == true).Count(); }
         public ActiveRoom(long roomId, long ownerId)
         {
             this.roomId = roomId;
@@ -44,149 +45,60 @@ namespace Rooms.Models
                     _messages.Remove(key);
             }
         }
-        public void AddUser(IPAddress ipAddress, HubCallerContext context, string connectionId, string name, string icon, long id, string guid)
+        public AddUserStatus AddUser(IPAddress ipAddress, HubCallerContext context, long id, string guid, string name, string icon, int limit)
         {
-            var user = new ActiveUser(icon, name, ipAddress);
-            if (id != 0) _registered_users.GetOrAdd(id, user).AddConnection(connectionId, context);
-            else if (guid != null) _guest_users.GetOrAdd(guid, user).AddConnection(connectionId, context);
-            else throw new ArgumentException("Either id or guid must be provided.");
-        }
-        public byte RemoveUser(ActiveUser user)
-        {
-            var key = _registered_users.FirstOrDefault(p => p.Value == user).Key;
-            if (key != 0)
-                _registered_users.Remove(key, out _);
+            if (_users.Values.Any(u => u._id == id && u._guid == guid))
+                return AddUserStatus.Active;
             else
             {
-                var guid = _guest_users.FirstOrDefault(p => p.Value == user).Key;
-                if (guid != null)
-                    _guest_users.Remove(guid, out _);
+                if (_users.Count >= limit)
+                    return AddUserStatus.Limit;
+                if (_users.TryAdd(context.ConnectionId, new ActiveUser(id, guid, icon, name, ipAddress, context)))
+                    return AddUserStatus.Added;
+                else return AddUserStatus.Failed;
             }
-            return Online;
         }
-        public ActiveUser UserByConnectionId(string connectionId) =>
-            _registered_users.Values.Concat(_guest_users.Values).First(u => u.ContainsConnection(connectionId));
-        public string[] GetVoiceUsers(long id = 0, string guid = null)
+        public IEnumerable<HubCallerContext> Users
         {
-            if (id != 0) return _registered_users.Where(p => p.Key != id && p.Value.voiceConnection != null)
-                 .Select(p => p.Value.voiceConnection).Concat(_guest_users.Values
-                 .Where(u => u.voiceConnection != null).Select(u => u.voiceConnection)).ToArray();
-            else if (guid != null) return _registered_users.Values.Where(u => u.voiceConnection != null).Select(u => u.voiceConnection)
-                 .Concat(_guest_users.Where(p => p.Key != guid && p.Value.voiceConnection != null).Select(p => p.Value.voiceConnection)).ToArray();
-            else return _registered_users.Values.Where(u => u.voiceConnection != null).Select(u => u.voiceConnection)
-                .Concat(_guest_users.Values.Where(u => u.voiceConnection != null).Select(u => u.voiceConnection)).ToArray();
+            get => _users.Values.Select(u => u._context);
         }
-        public string[] ConnectVoiceUser(long id, string guid, string connectionId)
+        public ICollection<string> Connections
         {
-            var user = this.User(id, guid);
-            if (user.voiceConnection != null)
-                return null;
-            VoiceUsersCount++;
-            user.voiceConnection = connectionId;
-            return GetVoiceUsers(id, guid);
+            get => _users.Keys;
         }
-        public int DisconnectVoiceUser(long id, string guid, string connectionId)
+        public ActiveUser GetUser(string connectionId = null, long id = 0)
         {
-            var user = this.User(id, guid);
-            if (user.voiceConnection == connectionId)
-            {
-                this.VoiceUsersCount--;
-                user.voiceConnection = null;
-                return this.VoiceUsersCount;
-            }
-            return -1;
-        }
-        public int GetOpenConnections(long id, string guid)
-        {
-            if (id != 0) return _registered_users[id].connections.Count;
-            else if (guid != null) return _guest_users[guid].connections.Count;
-            else throw new ArgumentException("Either id or guid must be provided.");
-        }
-        public string[] GetConnections(long userId = 0, string guid = null, string connectionId = null, long[] ids = null)
-        {
-            if (userId != 0) return _registered_users.Where(p => p.Key != userId)
-               .SelectMany(p => p.Value.connections.Keys).Concat(_guest_users.Values.SelectMany(u => u.connections.Keys)).ToArray();
-            else if (guid != null) return _registered_users.Values.SelectMany(u => u.connections.Keys).Concat(_guest_users
-                .Where(p => p.Key != guid).SelectMany(p => p.Value.connections.Keys)).ToArray();
-            else if (connectionId != null)
-            {
-                if (ids != null)
-                    return _registered_users.Where(p => ids.Contains(p.Key))
-                        .SelectMany(p => p.Value.connections.Keys).Where(id => id != connectionId).ToArray();
-                else
-                    return _registered_users.Values.Concat(_guest_users.Values)
-                        .SelectMany(u => u.connections.Keys).Where(id => id != connectionId).ToArray();
-            }
-            else return _registered_users.Values.Concat(_guest_users.Values).SelectMany(u => u.connections.Keys).ToArray();
-        }
-        public IEnumerable<string> GetUserConnections(long userId, string guid)
-        {
-            if (userId != 0)
-            {
-                var result = _registered_users.GetValueOrDefault(userId);
-                if (result != null) return result.connections.Keys;
-            }
-            else if (guid != null)
-            {
-                var result = _guest_users.GetValueOrDefault(guid);
-                if (result != null) return result.connections.Keys;
-            }
-            return Enumerable.Empty<string>();
-        }
-        public ICollection<HubCallerContext> GetUserHubContexts(long userId = 0, string guid = null)
-        {
-            if (userId != 0)
-            {
-                var result = _registered_users.GetValueOrDefault(userId);
-                if (result != null) return result.connections.Values;
-            }
-            else if (guid != null)
-            {
-                var result = _guest_users.GetValueOrDefault(guid);
-                if (result != null) return result.connections.Values;
-            }
-            else
-            {
-                return _registered_users.Values.SelectMany(u => u.GetUserHubContexts)
-                    .Concat(_guest_users.Values.SelectMany(u => u.GetUserHubContexts)).ToList();
-            }
+            if (connectionId != null) return _users.GetValueOrDefault(connectionId, null);
+            if (id != 0) return _users.Values.FirstOrDefault(u => u._id == id);
             return null;
         }
-        public IEnumerable<RoomsUser> Users(long id = 0, string guid = null)
+        public (ActiveUser user, string[] users) RemoveUser(string connectionId)
         {
-            if (id != 0) return _registered_users.Where(p => p.Key != id).Select(p => new RoomsUser
-            {
-                Id = p.Key,
-                Name = p.Value.name,
-                Guid = null,
-                Icon = p.Value.icon
-            }).Concat(_guest_users.Select(p => new RoomsUser
-            {
-                Id = 0,
-                Name = p.Value.name,
-                Guid = p.Key,
-                Icon = p.Value.icon
-            }));
-            else if (guid != null) return _registered_users.Select(p => new RoomsUser
-            {
-                Id = p.Key,
-                Name = p.Value.name,
-                Guid = null,
-                Icon = p.Value.icon
-            }).Concat(_guest_users.Where(p => p.Key != guid).Select(p => new RoomsUser
-            {
-                Id = 0,
-                Name = p.Value.name,
-                Guid = p.Key,
-                Icon = p.Value.icon
-            }));
-            else throw new ArgumentException("Either id or guid must be provided.");
+            ActiveUser user;
+            _users.Remove(connectionId, out user);
+            return (user, Users.Select(c => c.ConnectionId).ToArray());
         }
-        public ActiveUser User(long id, string guid)
+        public HubCallerContext ConnectionByCred(long id, string guid) =>
+            _users.Values.FirstOrDefault(u => u._id == id && u._guid == guid)?._context;
+        public IEnumerable<ActiveUser> GetUsers(string connectionId) =>
+            _users.Where(p => p.Key != connectionId).Select(p => p.Value);
+        public string[] ConnectVoiceUser(string connectionId)
         {
-            if (id != 0) return _registered_users.GetValueOrDefault(id);
-            else if (guid != null) return _guest_users.GetValueOrDefault(guid);
-            else throw new ArgumentException("Either id or guid must be provided.");
+            var user = GetUser(connectionId);
+            if (user._voiceOn == true)
+                return null;
+            user._voiceOn = true;
+            return _users.Where(p => p.Value._voiceOn == true).Select(p => p.Key).ToArray();
+        }
+        public int DisconnectVoiceUser(string connectionId)
+        {
+            var user = this.GetUser(connectionId);
+            if (user._voiceOn)
+            {
+                user._voiceOn = false;
+                return VoiceUsersCount;
+            }
+            return -1;
         }
         public int MsgCount
         {
@@ -196,12 +108,11 @@ namespace Rooms.Models
                     return _messages.Count();
             }
         }
-        public (InMemoryMessage message, MessageStatus status) AddMessage(long roomId,
-            string connectionId, string message, long[] accessIds, long id, string guid)
+        public (InMemoryMessage message, MessageStatus status) AddMessage(string connectionId, long id, string guid, string message, bool secret)
         {
             var status = MessageStatus.Ok;
             var time = DateTime.UtcNow;
-            ActiveUser user = UserByConnectionId(connectionId);
+            ActiveUser user = GetUser(connectionId);
             if (time - user._lastMessageTime < TimeSpan.FromSeconds(2) || user._lastMessage.Equals(message))
             {
                 user._hits++;
@@ -222,25 +133,22 @@ namespace Rooms.Models
             InMemoryMessage msg = null;
             if (status == MessageStatus.Ok)
             {
-                msg = new InMemoryMessage(roomId, id, guid, time.Ticks, user.name, user.icon, accessIds, message);
-                lock (_messages) _messages.Add(time.Ticks, msg);
+                msg = new InMemoryMessage(roomId, id, guid, time.Ticks, user.name, user.icon, message);
+                if (!secret)
+                    lock (_messages) _messages.Add(time.Ticks, msg);
             }
             return (msg, status);
         }
-        public IEnumerable<RoomsMsg> GetMessages(long id, string guid)
+        public IEnumerable<RoomsMsg> GetMessages()
         {
             lock (_messages)
             {
-                IEnumerable<InMemoryMessage> msgs;
-                if (id != 0) msgs = _messages.Values.Reverse().Where(m => m.accessIds == null || m.accessIds.Contains(id));
-                else if (guid != null) msgs = _messages.Values.Reverse().Where(m => m.accessIds == null);
-                else throw new ArgumentException("Either id or guid must be provided.");
-                return msgs.Select(m => new RoomsMsg
+                return _messages.Values.Reverse().Select(m => new RoomsMsg
                 {
                     UserId = m.userId,
                     UserGuid = m.userGuid,
                     Icon = m.senderIcon,
-                    Secret = m.accessIds != null,
+                    Secret = false,
                     Sender = m.senderName,
                     Text = m.text,
                     Time = m.timeStamp
@@ -258,7 +166,6 @@ namespace Rooms.Models
                     {
                         UserId = m.userId,
                         GUID = m.userGuid,
-                        AccessIds = m.accessIds,
                         RoomId = m.roomId,
                         SenderIcon = m.senderIcon,
                         SenderName = m.senderName,
@@ -274,47 +181,38 @@ namespace Rooms.Models
     public class ActiveUser
     {
         public IPAddress ipAddress;
-        public ConcurrentDictionary<string, HubCallerContext> connections;
-        public string voiceConnection;
+        public HubCallerContext _context;
+        public bool _voiceOn;
+        public long _id;
+        public string _guid;
         public string icon;
         public string name;
         public string _lastMessage;
         public DateTime _lastMessageTime;
         public bool _warned;
         public int _hits;
-        public ActiveUser(string icon, string name, IPAddress ipAddress)
+        public ActiveUser(long id, string guid, string icon, string name, IPAddress ipAddress, HubCallerContext context)
         {
+            _id = id;
+            _guid = guid;
             this.icon = icon;
             this.name = name;
             this.ipAddress = ipAddress;
-            this.connections = new ConcurrentDictionary<string, HubCallerContext>();
+            _context = context;
             _lastMessage = "";
             _lastMessageTime = DateTime.UtcNow;
             _warned = false;
             _hits = 0;
         }
-        public void AddConnection(string connectionId, HubCallerContext context) =>
-            connections[connectionId] = context;
-        public int RemoveConnection(string connectionId)
-        {
-            connections.Remove(connectionId, out _);
-            return connections.Count;
-        }
-        public bool ContainsConnection(string connectionId) =>
-            connections.ContainsKey(connectionId);
-        public ICollection<HubCallerContext> GetUserHubContexts =>
-            connections.Values;
     }
     public class InMemoryMessage
     {
-        public InMemoryMessage(long roomId, long userId, string userGuid, long timeStamp, string senderName,
-            string senderIcon, IEnumerable<long> accessIds, string text)
+        public InMemoryMessage(long roomId, long userId, string userGuid, long timeStamp, string senderName, string senderIcon, string text)
         {
             this.roomId = roomId;
             this.userId = userId;
             this.userGuid = userGuid;
             this.timeStamp = timeStamp;
-            this.accessIds = accessIds;
             this.senderName = senderName;
             this.senderIcon = senderIcon;
             this.text = text;
@@ -323,7 +221,6 @@ namespace Rooms.Models
         public long userId;
         public string userGuid;
         public long timeStamp;
-        public IEnumerable<long> accessIds;
         public string senderName;
         public string senderIcon;
         public string text;

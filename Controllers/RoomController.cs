@@ -62,7 +62,7 @@ namespace Rooms.Controllers
                     if (room.Slug != slug && await _context.Rooms.AnyAsync(r => r.Slug == slug))
                         return BadRequest(Errors.RoomNameExist);
                     if (room.Name != form.Name || room.Country != form.Country)
-                        connectionIds = _state.Connections(room.RoomId);
+                        connectionIds = _state.GetRoom(room.RoomId)?.Users.Select(c => c.ConnectionId).ToArray();
                     room.Name = form.Name;
                     room.Slug = slug;
                     room.Description = form.Description;

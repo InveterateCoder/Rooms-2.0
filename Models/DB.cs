@@ -66,14 +66,6 @@ namespace Rooms.Models
         public long UserId { get; set; }
         [MaxLength(40)]
         public string GUID { get; set; }
-        [MaxLength(5000)]
-        public string AccessIdsJson { get; set; }
-        [NotMapped]
-        public IEnumerable<long> AccessIds
-        {
-            get => AccessIdsJson == null ? null : JsonSerializer.Deserialize<IEnumerable<long>>(AccessIdsJson);
-            set => AccessIdsJson = value == null ? null : JsonSerializer.Serialize<IEnumerable<long>>(value);
-        }
         [Required, MaxLength(34)]
         public string SenderName { get; set; }
         [Required, MaxLength(5)]

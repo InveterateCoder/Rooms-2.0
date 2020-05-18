@@ -16,7 +16,7 @@ namespace Rooms.Models
     public class SearchRoom
     {
         public SearchRoom(string name, string slug,
-            string description, string flag, bool locked, byte online)
+            string description, string flag, bool locked, int online)
         {
             Name = name; Slug = slug;
             Description = description;
@@ -28,6 +28,6 @@ namespace Rooms.Models
         public string Description {get;set;}
         public string Flag {get;set;}
         public bool Locked {get;set;}
-        public byte Online {get;set;}
+        public int Online {get;set;}
     }
 }

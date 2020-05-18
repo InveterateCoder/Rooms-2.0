@@ -76,16 +76,22 @@ namespace Rooms.Controllers
                         {
                             await _hub.Clients.Clients(contexts.Select(c => c.ConnectionId).ToArray()).SendAsync("roomDeleted");
                         }
-                        finally
-                        {
-                            foreach (var context in contexts)
-                                context.Abort();
-                        }
+                        catch { };
+                        foreach (var context in contexts)
+                            context.Abort();
                     }
                 }
-                var connections = _state.UserConnections(id.UserId);
+                var connections = _state.AllConnections(id.UserId, id.Guest);
                 if (connections.Count() > 0)
-                    await _hub.Clients.Clients(connections).SendAsync("userRemoved");
+                {
+                    try
+                    {
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).ToArray()).SendAsync("userRemoved");
+                    }
+                    catch { };
+                    foreach (var connection in connections)
+                        connection.Abort();
+                }
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
                 return Ok("ok");
@@ -106,8 +112,12 @@ namespace Rooms.Controllers
                 {
                     Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
                     var connectionIds = _state.ChangeUser(id.UserId, icon: icon);
-                    if (connectionIds.Length > 0)
-                        await _hub.Clients.Clients(connectionIds).SendAsync("iconChanged", new { id = id.UserId, icon = icon });
+                    if (connectionIds.Count > 0)
+                        try
+                        {
+                            await _hub.Clients.Clients(connectionIds).SendAsync("iconChanged", new { id = id.UserId, icon = icon });
+                        }
+                        catch { };
                 });
             }
             return Ok("ok");
@@ -120,9 +130,9 @@ namespace Rooms.Controllers
                 Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
                 if (id.UserId != 0)
                 {
-                    var connectionIds = _state.UserConnections(id.UserId);
-                    if (connectionIds.Length > 0)
-                        await _hub.Clients.Clients(connectionIds).SendAsync("langChanged", lang);
+                    var connections = _state.AllConnections(id.UserId, id.Guest);
+                    if (connections.Count > 0)
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).ToArray()).SendAsync("langChanged", lang);
                 }
             });
             return Ok("ok");
@@ -135,9 +145,9 @@ namespace Rooms.Controllers
                 Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
                 if (id.UserId != 0)
                 {
-                    var connectionIds = _state.UserConnections(id.UserId);
-                    if (connectionIds.Length > 0)
-                        await _hub.Clients.Clients(connectionIds).SendAsync("themeChanged", theme);
+                    var connections = _state.AllConnections(id.UserId, id.Guest);
+                    if (connections.Count > 0)
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).ToArray()).SendAsync("themeChanged", theme);
                 }
             });
             return Ok("ok");
@@ -148,19 +158,16 @@ namespace Rooms.Controllers
             await Task.Run(async () =>
             {
                 Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
-                var connections = _state.UserConnectionContexts(id.UserId, id.Guest);
+                var connections = _state.AllConnections(id.UserId, id.Guest);
                 if (connections.Count() > 0)
                 {
-                    var waiting = _state._waitingPassword.Where(p => p.Value.id == id.UserId && p.Value.guid == id.Guest);
                     try
                     {
-                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).Concat(waiting.Select(p => p.Key)).ToArray()).SendAsync("logout");
+                        await _hub.Clients.Clients(connections.Select(c => c.ConnectionId).ToArray()).SendAsync("logout");
                     }
-                    finally
-                    {
-                        foreach (var connection in connections.Concat(waiting.Select(p => p.Value.context)))
-                            connection.Abort();
-                    }
+                    catch { };
+                    foreach (var connection in connections)
+                        connection.Abort();
                 }
             });
             return Ok("ok");

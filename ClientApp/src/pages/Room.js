@@ -35,7 +35,7 @@ const text = new LocalizedStrings({
         today: "Today",
         wrong: "Sorry, something went wrong.",
         noroom: "Sorry, room is not found.",
-        limit: "Sorry, room's capacity has reached the limit. Try again later.",
+        limit: "Sorry, room's capacity has reached the limit which is set to ",
         access: "Access denied. Wrong password.",
         deleted: "The room has been deleted by the owner.",
         userRemoved: "User successfully deleted.",
@@ -65,14 +65,15 @@ const text = new LocalizedStrings({
         min: "min",
         loggedOut: "You have logged out.",
         spamwarn: "🛑 Spamming and flooding are highly prohibited here. Please, slow down! 😢",
-        spamban: "🚫 You have been distanced from Rooms for 5 minutes for spamming. Please, be patient. 😟"
+        spamban: "🚫 You have been distanced from Rooms for 5 minutes for spamming. Please, be patient. 😟",
+        active: "You are already connected to this room.",
     },
     ru: {
         placeholder: "Введите сообщение ...",
         today: "Сегодня",
         wrong: "Извините, что-то пошло не так.",
         noroom: "Извините, комната не найден.",
-        limit: "Извините, вместимость комнаты достигла предела. Попробуйте позже.",
+        limit: "Извините, вместимость комнаты достигла предела установленного в ",
         access: "Доступ запрещен. Неправильный пароль.",
         deleted: "Комната была удалена владельцем.",
         userRemoved: "Пользователь успешно удален.",
@@ -102,7 +103,8 @@ const text = new LocalizedStrings({
         min: "мин",
         loggedOut: "Вы вышли из системы.",
         spamwarn: "🛑 Спам и флуд здесь строго запрещены. Пожалуйста, помедленнее! 😢",
-        spamban: "🚫 Вы были отлучены от комнат на 5 минут из-за рассылки спама. Пожалуйста, будьте терпеливы. 😟"
+        spamban: "🚫 Вы были отлучены от комнат на 5 минут из-за рассылки спама. Пожалуйста, будьте терпеливы. 😟",
+        active: "Вы уже подключены к этой комнате.",
     }
 })
 let wrong = text.wrong;
@@ -165,6 +167,9 @@ export class Room extends Component {
         this.connection.on("logout", this.llogout);
         this.connection.on("spamwarn", this.spamwarn);
         this.connection.on("spamban", this.spamban);
+        this.connection.on("limit", this.limit);
+        this.connection.on("active", this.active);
+        this.connection.on("block", this.block);
         this.menu = React.createRef();
         this.msgpanel = React.createRef();
         this.toastsRef = React.createRef();
@@ -187,10 +192,10 @@ export class Room extends Component {
         };
     }
     muteUser = (usr, min) => {
-        this.connection.invoke("MuteUser", usr.id, usr.guid, min).then(() => alert(text.userMuted)).catch(err => { alert(err.message) });
+        this.connection.invoke("MuteUser", usr, min).then(() => alert(text.userMuted)).catch(err => { alert(err.message) });
     }
     banUser = (usr, min) => {
-        this.connection.invoke("BanUser", usr.id, usr.guid, min).then(() => alert(text.userBanned)).catch(err => { alert(err.message) });
+        this.connection.invoke("BanUser", usr, min).then(() => alert(text.userBanned)).catch(err => { alert(err.message) });
     }
     clearMessages = (from, till) => {
         this.connection.invoke("ClearMessages", from ? from : 0, till ? till : 0).then(() => alert(text.clearDatabase));
@@ -212,6 +217,20 @@ export class Room extends Component {
     spamban = () => {
         wrong = text.spamban;
     }
+    limit = n => {
+        wrong = text.limit + n;
+    }
+    active = () => {
+        wrong = text.active;
+    }
+    block = () => {
+        this.setState({ loading: false, blocked: true }, () => {
+            if (this.passwordAttempted)
+                alert(text.access);
+            else this.passwordAttempted = true;
+        });
+    }
+
     setupRTCPeerConnection = connectionId => {
         let conn = new RTCPeerConnection({
             iceServers: [{
@@ -336,27 +355,26 @@ export class Room extends Component {
         wrong = text.loggedOut;
     }
     logout = () => {
-        this.connection.stop().then(() => {
-            debugger;
-            for (let key in this.voiceAudios) {
-                this.voiceAudios[key].pause();
-                delete this.voiceAudios[key];
-            }
-            for (let key in this.voiceConnections) {
-                this.voiceConnections[key].close();
-                delete this.voiceConnections[key];
-            }
-            if (this.state.micStream) {
-                for (let track of this.state.micStream.getTracks())
-                    track.stop();
-                this.setState({ micStream: null });
-            }
-        });
+        for (let key in this.voiceAudios) {
+            this.voiceAudios[key].pause();
+            delete this.voiceAudios[key];
+        }
+        for (let key in this.voiceConnections) {
+            this.voiceConnections[key].close();
+            delete this.voiceConnections[key];
+        }
+        if (this.state.micStream) {
+            for (let track of this.state.micStream.getTracks())
+                track.stop();
+            this.setState({ micStream: null });
+        }
     }
     fail = (failed, warning) => {
-        this.logout();
-        if (!this.unmounted)
-            this.setState({ failed, warning }, this.componentWillUnmount);
+        if (!this.state.blocked) {
+            this.logout();
+            if (!this.unmounted)
+                this.setState({ failed, warning }, this.componentWillUnmount);
+        };
     }
     openmenu = () => {
         this.setState({ menuopen: true }, () => {
@@ -431,58 +449,42 @@ export class Room extends Component {
         else this.setState({ delayTimer: 0 });
     }
     processEnter = data => {
-        switch (data.code) {
-            case "ok":
-                this.setState({
-                    loading: false,
-                    blocked: false,
-                    roomId: data.payload.roomId,
-                    myId: data.payload.myId,
-                    flag: data.payload.flag,
-                    roomname: data.payload.name,
-                    users: this.initializeUsersColors(data.payload.users),
-                    voiceOnline: data.payload.voiceUserCount,
-                    isAdmin: data.payload.isAdmin
-                }, () => {
-                    let length = data.payload.messages.length;
-                    if (length < this.msgsCount)
-                        this.oldestMsgTime = null;
-                    else
-                        this.oldestMsgTime = data.payload.messages[length - 1].time;
-                    this.fillMessages(data.payload.messages);
-                    window.scrollTo(0, document.body.scrollHeight);
-                    this.windowScrolled();
-                    setTimeout(this.enterTimeout, 1000);
-                });
-                break;
-            case "password":
-                this.setState({ loading: false, blocked: true });
-                break;
-            case "limit":
-                this.fail(null, text.limit);
-                break;
-            case "noroom":
-                this.fail(null, text.noroom);
-                break;
-            case "banned":
-                alert("Banned");
-                break;
-            default:
-                this.fail(data.code || text.wrong);
-        }
+        this.setState({
+            loading: false,
+            blocked: false,
+            roomId: data.roomId,
+            myId: data.myId,
+            flag: data.flag,
+            roomname: data.name,
+            users: this.initializeUsersColors(data.users),
+            voiceOnline: data.voiceUserCount,
+            isAdmin: data.isAdmin
+        }, () => {
+            let length = data.messages.length;
+            if (length < this.msgsCount)
+                this.oldestMsgTime = null;
+            else
+                this.oldestMsgTime = data.messages[length - 1].time;
+            this.fillMessages(data.messages);
+            window.scrollTo(0, document.body.scrollHeight);
+            this.windowScrolled();
+            setTimeout(this.enterTimeout, 1000);
+        });
     }
     confirmPassword = () => {
         let err = validator.password(this.state.password, this.context.lang);
         if (err) alert(err);
-        else this.setState({ loading: true }, async () => {
+        else this.setState({ loading: true, blocked: false }, async () => {
             try {
-                let data = await this.connection.invoke("Enter", this.props.match.params["room"],
-                    this.state.icon, this.state.password, this.msgsCount);
-                if (data.code === "password") alert(text.access);
+                await this.connection.start();
+                let data = null;
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                this.processEnter(data);
+                data = await this.connection.invoke("Enter", this.props.match.params["room"],
+                    this.state.icon, this.state.password, this.msgsCount);
+                if (data)
+                    this.processEnter(data);
             } catch (err) {
-                this.fail(err.message || text.wrong);
+                this.fail(wrong);
             }
         });
     }
@@ -742,7 +744,7 @@ export class Room extends Component {
         }
         this.inputRef.current.value = "";
         this.inputChanged();
-        let ids = this.state.selusers.length > 0 && !this.state.public ? this.state.selusers.map(u => u.id) : null;
+        let ids = this.state.selusers.length > 0 && !this.state.public ? this.state.selusers.map(u => u.connectionId) : null;
         let msg = {
             userId: this.context.userId,
             userGuid: this.context.userGuid,
@@ -806,8 +808,7 @@ export class Room extends Component {
         wrong = text.deleted;
     }
     userRemoved = () => {
-        this.connection.stop();
-        this.fail(null, text.userRemoved);
+        wrong = text.userRemoved;
     }
     usernameChanged = creds => {
         if (creds.id === this.state.myId)
@@ -990,14 +991,15 @@ export class Room extends Component {
         this.toaster = setInterval(this.initToastsMaxHeight, 100);
         try {
             await this.connection.start();
-            let data = await this.connection.invoke("Enter", this.props.match.params["room"],
+            let data = null;
+            data = await this.connection.invoke("Enter", this.props.match.params["room"],
                 this.state.icon, null, this.msgsCount);
-            this.processEnter(data);
+            if (data)
+                this.processEnter(data);
         }
         catch (err) {
-            if (bmin != null && bsec != null)
-                this.setState({ warning: `${text.bannedRemains} ${bmin}${text.m} : ${bsec}${text.s}` })
-            else this.setState({ failed: err.message });
+            if (bmin && bsec)
+                wrong = `${text.bannedRemains} ${bmin}${text.m} : ${bsec}${text.s}`;
         }
     }
     componentWillUnmount() {

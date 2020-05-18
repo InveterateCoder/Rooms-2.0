@@ -6,7 +6,6 @@ import LocalizedStrings from "react-localization";
 
 const text = new LocalizedStrings({
     en: {
-        text: "Register to Enable",
         supportAlert: "Sorry, your browser is not supported.",
         mediaSupport: "Something went wrong. Check your microphone and the permissions.",
         admin: "Admin Tools",
@@ -22,7 +21,6 @@ const text = new LocalizedStrings({
         confirm: "Are you sure you want to delete all messages?"
     },
     ru: {
-        text: "Регистрируйтесь, чтобы Включить",
         supportAlert: "Извините, ваш браузер не поддерживается.",
         mediaSupport: "Что-то пошло не так. Проверьте свой микрофон и разрешения.",
         admin: "Админ. Инструменты",
@@ -56,9 +54,9 @@ export function Menu(props) {
     });
     const formUser = user => {
         let selected = !props.public && props.selusers.includes(user);
-        return <div className={`p-2 pl-3 pr-3${user.guid ? " text-muted" : props.registered ? ` user${selected ? " selected" : ""}` : ""}`}
-            key={user.guid ? user.guid : user.id} onClick={!user.guid && props.registered ? () => props.userClicked(user) : null}>
-            <img src={`/img/${user.icon}.${user.guid ? "m" : selected ? "light" : "dark"}.svg`} draggable={false}
+        return <div className={`p-2 pl-3 pr-3${` user${selected ? " selected" : ""}`}`}
+            key={user.connectionId} onClick={() => props.userClicked(user)}>
+            <img src={`/img/${user.icon}.${selected ? "light" : "dark"}.svg`} draggable={false}
                 className="mr-3 rounded-circle" alt="icon" />
             <span>{user.name}</span>
         </div>
@@ -98,20 +96,14 @@ export function Menu(props) {
     const muteUser = () => {
         let value = userRef.current.value;
         if (!value) return;
-        let user = users.find(user => user.id == value || user.guid == value);
-        if (user){
-            props.muteUser(user, penaltyMins);
-            setShowModal(false);
-        }
+        props.muteUser(value, penaltyMins);
+        setShowModal(false);
     }
     const banUser = () => {
         let value = userRef.current.value;
         if (!value) return;
-        let user = users.find(user => user.id == value || user.guid == value);
-        if (user) {
-            props.banUser(user, penaltyMins);
-            setShowModal(false);
-        }
+        props.banUser(value, penaltyMins);
+        setShowModal(false);
     }
     const clearMessages = () => {
         let from = datetimeFrom ? (new Date(datetimeFrom)).getTime() * 10000 + 621355968000000000 : datetimeFrom;
@@ -134,7 +126,7 @@ export function Menu(props) {
             <button onClick={props.closemenu} className="btnmenu btn btn-outline-light mr-3"><FontAwesomeIcon icon={faBars} /></button>
             <img src={`/img/${props.icon}.dark.svg`} draggable={false}
                 className="mr-3 rounded-circle" alt="icon" />
-            <span className={`navbar-brand${props.registered ? "" : " text-muted"}`}>{props.name}</span>
+            <span className="navbar-brand">{props.name}</span>
         </nav>
         <div id="names" className="text-light">
             {
@@ -145,16 +137,10 @@ export function Menu(props) {
             <div className={`col btn btn-${props.voiceActive ? "danger" : "dark"}`} onClick={voiceClick}>
                 <FontAwesomeIcon size="2x" color="#f8f9fa" icon={faMicrophone} /> {props.voiceOnline}
             </div>
-            {
-                props.registered
-                    ? <div className={`col btn btn-dark${props.public ? "" : " active"}`}
-                        onClick={setPublic}>
-                        <FontAwesomeIcon size="2x" color="#f8f9fa" icon={faUserFriends} />
-                    </div>
-                    : <div className="col text-warning p-2 text-center" style={{ fontSize: ".8rem" }}>
-                        {text.text}
-                    </div>
-            }
+            <div className={`col btn btn-dark${props.public ? "" : " active"}`}
+                onClick={setPublic}>
+                <FontAwesomeIcon size="2x" color="#f8f9fa" icon={faUserFriends} />
+            </div>
             <div className={`col btn btn-dark${props.sound ? " active" : ""}`} onClick={props.soundClicked}>
                 <FontAwesomeIcon size="2x" color="#f8f9fa" icon={props.sound ? faVolumeUp : faVolumeMute} />
             </div>
@@ -172,7 +158,7 @@ export function Menu(props) {
                             <div className="form-group input-group">
                                 <select className="form-control" ref={userRef}>
                                     {
-                                        users.map(user => <option key={`${user.id ? user.id : user.guid}`} value={`${user.id ? user.id : user.guid}`}>{user.name}</option>)
+                                        users.map(user => <option key={user.connectionId} value={user.connectionId}>{user.name}</option>)
                                     }
                                 </select>
                                 <div className="input-group-append ml-2">
