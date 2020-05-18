@@ -120,7 +120,9 @@ namespace Rooms.Hubs
                 if (count > -1)
                     try
                     {
-                        await Clients.Clients(_state.Others(Context.ConnectionId)).SendAsync("voiceCount", count);
+                        List<string> connections = new List<string>(_state.Others(Context.ConnectionId));
+                        connections.Add(Context.ConnectionId);
+                        await Clients.Clients(connections).SendAsync("voiceCount", count);
                     }
                     catch { };
             });
