@@ -66,7 +66,7 @@ const text = new LocalizedStrings({
         loggedOut: "You have logged out.",
         spamwarn: "🛑 Spamming and flooding are highly prohibited here. Please, slow down! 😢",
         spamban: "🚫 You have been distanced from Rooms for 5 minutes for spamming. Please, be patient. 😟",
-        active: "You are already connected to this room.",
+        active: "You already connected to this room.",
     },
     ru: {
         placeholder: "Введите сообщение ...",
@@ -476,6 +476,7 @@ export class Room extends Component {
         if (err) alert(err);
         else this.setState({ loading: true, blocked: false }, async () => {
             try {
+                await this.connection.stop();
                 await this.connection.start();
                 let data = null;
                 await new Promise(resolve => setTimeout(resolve, 2000));

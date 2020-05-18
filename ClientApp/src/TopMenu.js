@@ -13,7 +13,7 @@ const text = new LocalizedStrings({
     en: {
         Search: "Search",
         Lobby: "Lobby",
-        Account: "Account",
+        Account: "Settings",
         My_Room: "My Room",
         Register: "Register",
         Log_Out: "Log Out"
@@ -21,7 +21,7 @@ const text = new LocalizedStrings({
     ru: {
         Search: "Поиск",
         Lobby: "Лобби",
-        Account: "Аккаунт",
+        Account: "Настройки",
         My_Room: "Моя Комната",
         Register: "Регистрация",
         Log_Out: "Выйти"
@@ -68,7 +68,7 @@ export function TopMenu(props) {
     }
     text.setLanguage(context.lang);
     return <Navbar bg="dark" variant="dark" expand="md" sticky="top"
-        expanded={navExpanded} onToggle={toggleNav} style={{userSelect:"none"}} >
+        expanded={navExpanded} onToggle={toggleNav} style={{ userSelect: "none" }} >
         <Navbar.Brand>Rooms</Navbar.Brand>
         <InputGroup style={{ width: "55%", maxWidth: "245px" }} className="m-auto">
             <FormControl autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"

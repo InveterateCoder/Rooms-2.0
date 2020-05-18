@@ -19,6 +19,7 @@ namespace Rooms.Models
     {
         private readonly ConcurrentDictionary<string, ActiveUser> _users = new ConcurrentDictionary<string, ActiveUser>();
         private readonly SortedList<long, InMemoryMessage> _messages = new SortedList<long, InMemoryMessage>();
+        private readonly F23.StringSimilarity.Cosine _cosine = new F23.StringSimilarity.Cosine();
         public long OwnerId { get; set; }
         public readonly long roomId;
         public int Online { get => _users.Count(); }
@@ -113,7 +114,7 @@ namespace Rooms.Models
             var status = MessageStatus.Ok;
             var time = DateTime.UtcNow;
             ActiveUser user = GetUser(connectionId);
-            if (time - user._lastMessageTime < TimeSpan.FromSeconds(2) || user._lastMessage.Equals(message))
+            if (time - user._lastMessageTime < TimeSpan.FromSeconds(2) || _cosine.Similarity(user._lastMessage, message) > 0.5)
             {
                 user._hits++;
                 if (user._hits > 2)

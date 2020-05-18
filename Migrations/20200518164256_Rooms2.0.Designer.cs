@@ -8,7 +8,7 @@ using Rooms.Models;
 namespace Rooms.Migrations
 {
     [DbContext(typeof(RoomsDBContext))]
-    [Migration("20200518123254_Rooms2.0")]
+    [Migration("20200518164256_Rooms2.0")]
     partial class Rooms20
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,10 @@ namespace Rooms.Migrations
                     b.Property<long>("MessageId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
+
+                    b.Property<string>("GUID")
+                        .HasColumnType("varchar(40) CHARACTER SET utf8mb4")
+                        .HasMaxLength(40);
 
                     b.Property<long>("RoomId")
                         .HasColumnType("bigint");
@@ -43,6 +47,9 @@ namespace Rooms.Migrations
                         .HasMaxLength(2000);
 
                     b.Property<long>("TimeStamp")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("MessageId");
