@@ -178,21 +178,25 @@ namespace Rooms.Controllers
             try
             {
                 Identity id = JsonSerializer.Deserialize<Identity>(User.Identity.Name);
-                if (id.Guest != null) return Ok(id.Name);
-                var user = await _context.Users.Include(u => u.Room).FirstOrDefaultAsync(u => u.UserId == id.UserId);
-                if (user == null) throw new Exception("Invalid Token");
+                if (id.Guest != null) return Ok(new
+                {
+                    userId = id.UserId,
+                    userGuid = id.Guest,
+                    name = id.Name
+                });
+                var room = await _context.Rooms.FirstOrDefaultAsync(r => r.UserId == id.UserId);
                 return Ok(new
                 {
                     userId = id.UserId,
                     userGuid = id.Guest,
-                    name = user.Name,
-                    room = user.Room == null ? null : new
+                    name = id.Name,
+                    room = room == null ? null : new
                     {
-                        name = user.Room.Name,
-                        description = user.Room.Description,
-                        country = user.Room.Country,
-                        password = user.Room.Password,
-                        limit = user.Room.Limit
+                        name = room.Name,
+                        description = room.Description,
+                        country = room.Country,
+                        password = room.Password,
+                        limit = room.Limit
                     }
                 });
             }

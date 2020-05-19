@@ -530,6 +530,7 @@ export class Room extends Component {
         this.inputRef.current.focus();
         this.inputRef.current.setRangeText(evnt.target.innerText + ' ',
             this.inputRef.current.selectionStart, this.inputRef.current.selectionEnd, "end");
+        this.inputChanged();
     }
     htmlEncode = text =>
         String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -687,6 +688,8 @@ export class Room extends Component {
                 return "🌹";
             case 'h':
                 return "💖";
+            case 'w':
+                return "👋";
             case 'lol':
                 return "😂";
             case 'rofl':

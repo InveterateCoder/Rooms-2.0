@@ -198,18 +198,16 @@ export default class App extends Component {
             Get(urls.accountInfo, this.state.lang, this.state.jwt)
                 .then(data => {
                     if (data) {
-                        if (this.state.registered)
-                            this.setState({
-                                userId: data.userId,
-                                userGuid: data.userGuid,
-                                name: data.name,
-                                room: !data.room ? this.state.room : {
-                                    ...data.room,
-                                    password: data.room.password ? data.room.password : "",
-                                    description: data.room.description ? data.room.description : ""
-                                }
-                            });
-                        else this.setState({ name: data });
+                        this.setState({
+                            userId: data.userId,
+                            userGuid: data.userGuid,
+                            name: data.name,
+                            room: !data.room ? this.state.room : {
+                                ...data.room,
+                                password: data.room.password ? data.room.password : "",
+                                description: data.room.description ? data.room.description : ""
+                            }
+                        });
                     }
                     else this.signOut();
                 }).catch(() => {
