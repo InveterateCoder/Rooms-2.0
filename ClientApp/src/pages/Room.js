@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Context } from "../data/Context";
 import { Preloader } from "../Preloader";
 import { Menu } from "./accessories/Room/Menu";
-import { Toast, DropdownButton } from "react-bootstrap";
+import { Toast } from "react-bootstrap";
 import Flag from "react-flags";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faAngleLeft, faInfoCircle, faExclamationTriangle, faSignInAlt, faArrowCircleDown, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
@@ -726,8 +726,8 @@ export class Room extends Component {
         return _m;
     }
     replaceWithEmojis = text => {
-        return text.replace(/(https?:\/\/[^\s]+)?\?/g, this.questionReplacer).replace(/!/g, '❕').replace(/\^\^/g, "😁")
-            .replace(/([:;]([\)Pp\(DdOo]))/g, this.columnReplacer).replace(/(\(([ynrhlorf]+)\))/g, this.uniqueReplacer);
+        return text.replace(/(https?:\/\/[^\s]+)?\?/g, this.questionReplacer).replace(/!/g, '❕').replace(/\^\^/g, "😄")
+            .replace(/([:;]([\)Pp\(DdOo]))/g, this.columnReplacer).replace(/(\(([ynrhlorfw]+)\))/g, this.uniqueReplacer);
     }
     sendMsg = ev => {
         if (!ev.isTrusted) {
