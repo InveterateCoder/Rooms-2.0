@@ -114,10 +114,10 @@ namespace Rooms.Models
             room.ClearMessages(from, till);
             return true;
         }
-        public string[] ConnectVoiceUser(string connectionId)
+        public (string[] users, int cout) ConnectVoiceUser(string connectionId)
         {
             var room = this.GetRoom(connectionId);
-            return room?.ConnectVoiceUser(connectionId);
+            return (room?.ConnectVoiceUser(connectionId), room.VoiceUsersCount);
         }
         public int DisconnectVoiceUser(string connectionId)
         {

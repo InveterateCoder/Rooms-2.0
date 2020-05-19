@@ -89,7 +89,7 @@ namespace Rooms.Models
             if (user._voiceOn == true)
                 return null;
             user._voiceOn = true;
-            return _users.Where(p => p.Value._voiceOn == true).Select(p => p.Key).ToArray();
+            return _users.Values.Select(u => u._context.ConnectionId).ToArray();
         }
         public int DisconnectVoiceUser(string connectionId)
         {

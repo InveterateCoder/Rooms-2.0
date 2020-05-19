@@ -101,11 +101,11 @@ namespace Rooms.Hubs
         {
             return await Task.Run(async () =>
             {
-                var users = _state.ConnectVoiceUser(Context.ConnectionId);
+                (var users, var count) = _state.ConnectVoiceUser(Context.ConnectionId);
                 if (users == null) throw new HubException("Failed to perform connection.");
                 try
                 {
-                    await Clients.Clients(users).SendAsync("voiceCount", users.Length);
+                    await Clients.Clients(users).SendAsync("voiceCount", count);
                 }
                 catch { };
                 return users;
