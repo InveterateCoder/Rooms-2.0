@@ -5,7 +5,7 @@
     "default_locale": "en",
     "description": "Create your own chat room / Secure your room with a password / Send secret messages",
     "start_url": "https://webrooms.azurewebsites.net/lobby/1",
-    "display": "standalone",
+    "display": "fullscreen",
     "icons": [
         {
             "src": "\/android-icon-36x36.png",
