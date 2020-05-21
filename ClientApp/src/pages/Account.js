@@ -24,12 +24,6 @@ const text = new LocalizedStrings({
         cancel: "Cancel",
         delete: "Delete",
         confirm: "Are you sure you want to delete your account?",
-        openin: "Open in",
-        opinopts: {
-            "nw": "New window",
-            "nt": "New tab",
-            "st": "Same tab"
-        },
         theme: "Theme",
         light: "Light",
         dark: "Dark"
@@ -46,12 +40,6 @@ const text = new LocalizedStrings({
         cancel: "Отмена",
         delete: "Удалить",
         confirm: "Вы уверены, что хотите удалить свой аккаунт?",
-        openin: "Открывать в",
-        opinopts: {
-            "nw": "Новое окно",
-            "nt": "Новая вкладка",
-            "st": "Та же вкладка"
-        },
         theme: "Тема",
         light: "Светлая",
         dark: "Тёмная"
@@ -145,10 +133,6 @@ export function Account(props) {
         <FormGroup type="select" label={text.perpage} value={context.perpage}
             onChange={ev => context.setPerpage(ev.target.value)}
             opts={{ 10: 10, 30: 30, 50: 50 }} />
-        <br />
-        <FormGroup type="select" label={text.openin} value={context.openin}
-            onChange={ev => context.setOpenIn(ev.target.value)}
-            opts={{ ...text.opinopts }} />
         <br />
         <FormGroup type="select" label={text.language} value={context.lang} onChange={selectLanguage}
             opts={{ en: "English", ru: "Русский" }} />
