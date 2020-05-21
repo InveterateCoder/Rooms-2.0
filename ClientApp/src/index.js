@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter, withRouter } from 'react-router-dom';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
-//import { unregister } from './registerServiceWorker';
 
 const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href');
 const rootElement = document.getElementById('root');
@@ -17,6 +16,5 @@ if (!navigator.webdriver) {
     rootElement);
 
   registerServiceWorker();
-  //unregister();
 }
 
