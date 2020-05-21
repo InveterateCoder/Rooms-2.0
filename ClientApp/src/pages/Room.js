@@ -131,7 +131,7 @@ export class Room extends Component {
             micStream: null,
             emojiClosed: true,
             isAdmin: false,
-            delayTimer: 3
+            delayOn: true
         }
         this.msgsCount = 100;
         this.oldestMsgTime = null;
@@ -173,6 +173,7 @@ export class Room extends Component {
         this.voiceConnections = {};
         this.voiceAudios = {};
         this.canSendMessage = true;
+        this.delayTimer = 2;
         this.lastMessage = {
             userId: 0,
             userGuid: null,
@@ -432,10 +433,11 @@ export class Room extends Component {
         return users;
     }
     enterTimeout = () => {
-        if (this.state.delayTimer > 1)
-            this.setState({ delayTimer: this.state.delayTimer - 1 },
-                () => setTimeout(this.enterTimeout, 1000));
-        else this.setState({ delayTimer: 0 });
+        if (this.delayTimer > 1) {
+            this.delayTimer--;
+            setTimeout(this.enterTimeout, 1000);
+        }
+        else this.setState({ delayOn: false });
     }
     processEnter = data => {
         this.setState({
@@ -929,7 +931,7 @@ export class Room extends Component {
         </div>
         else return <div id="room">
             {
-                this.state.delayTimer && <Delayer sec={this.state.delayTimer} />
+                this.state.delayOn && <Delayer />
             }
             <div id="toasts" ref={this.toastsRef} style={{ visibility: this.state.toasts.length ? "visible" : "hidden" }}>
                 {this.fillToasts()}
