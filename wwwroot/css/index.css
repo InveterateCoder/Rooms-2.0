@@ -1,16 +1,16 @@
 body {
-    overflow-y: scroll;
-    padding-bottom: 50px;
+  overflow-y: scroll;
+  padding-bottom: 50px;
 }
 .cover {
-    position: fixed;
-    left: 0; right: 0;
-    top: 0; bottom: 0;
-    z-index: 9000;
+  position: fixed;
+  left: 0; right: 0;
+  top: 0; bottom: 0;
+  z-index: 9000;
 }
 #loading {
-    background-color: rgba(0, 0, 0, .4);
-    opacity: 0;
+  background-color: rgba(0, 0, 0, .4);
+  opacity: 0;
 }
 #spinner {
   position: relative;
@@ -19,53 +19,68 @@ body {
   transform: translate(-50%, -50%);
 }
 #fatal {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    user-select: none;
-    text-align: center;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  text-align: center;
 }
 #fatal > .display-1 {
-    letter-spacing: 7px;
-    margin-bottom: -36px;
+  letter-spacing: 7px;
+  margin-bottom: -36px;
 }
 #fatal > span {
-    font-size: 0.9em;
-    margin-right: 35px;
-    padding: 5px;
+  font-size: 0.9em;
+  margin-right: 35px;
+  padding: 5px;
 }
 #preloader svg {
-    display:block;
-    width:258px;
-    height:258px;
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-  }
+  display:block;
+  width:258px;
+  height:258px;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
   
-  #preloader .tree {
-    fill: #343a40;
-  }
+#preloader .tree {
+  fill: #343a40;
+}
   
-  #preloader.dark .tree {
-    fill: #f8f9fa;
-  }
+#preloader.dark .tree {
+  fill: #f8f9fa;
+}
 
-  #preloader .circle-mask {
-    transform-origin: 50% 90%;
-    animation: scale 3s infinite ease-out;
-  }
+#preloader .circle-mask {
+  transform-origin: 50% 90%;
+  animation: scale 3s infinite ease-out;
+}
   
-  @keyframes scale {
-    0%, 100% {
-      transform: scale(0.0);
-    }
-    7%, 90% {
-      transform: scale(0.4);
-    }
-    50% {
-      transform: scale(1);
-    }
+@keyframes scale {
+  0%, 100% {
+    transform: scale(0.0);
   }
+  7%, 90% {
+    transform: scale(0.4);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@media screen and (max-width: 770px) {
+  #mpanel {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+  }
+}
+
+@media screen and (max-width: 700px) {
+  #mpanel > div:not(:last-child) {
+    margin-right: 10px;
+  }
+}

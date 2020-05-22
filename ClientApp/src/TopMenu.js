@@ -57,8 +57,8 @@ export function TopMenu(props) {
     const applySearch = () => {
         if (search === val) return;
         if (searchError) alert(searchError);
-        else if (!search) props.history.push("/lobby/1");
-        else props.history.push("/lobby/1?q=" + search.replace(/\s/g, '_'));
+        else if (!search) props.history.replace("/lobby/1");
+        else props.history.replace("/lobby/1?q=" + search.replace(/\s/g, '_'));
     }
     if (props.location.pathname.startsWith("/lobby/")) {
         let num = Number(props.location.pathname.substring(7));
@@ -82,22 +82,22 @@ export function TopMenu(props) {
         </InputGroup>
         <Navbar.Toggle />
         <Navbar.Collapse>
-            <Nav className="ml-auto">
-                <Nav.Link className="m-auto" as={NavLink} to={`/lobby/${page}${search ? "?q=" + search.replace(/\s/g, '_') : ""}`} activeClassName="active">
-                    <FontAwesomeIcon icon={faSearch} /> {text.Lobby}</Nav.Link>
+            <Nav id="mpanel" className="ml-auto">
+                <Nav.Item><Nav.Link as={NavLink} replace={true} to={`/lobby/${page}${search ? "?q=" + search.replace(/\s/g, '_') : ""}`} activeClassName="active">
+                    <FontAwesomeIcon icon={faSearch} /> {text.Lobby}</Nav.Link></Nav.Item>
                 {
                     context.registered
                         ? <>
-                            <Nav.Link className="m-auto" as={NavLink} to="/account" activeClassName="active">
-                                <FontAwesomeIcon icon={faUserAlt} /> {text.Account}</Nav.Link>
-                            <Nav.Link className="m-auto" as={NavLink} to="/myroom" activeClassName="active">
-                                <FontAwesomeIcon icon={faUsers} /> {text.My_Room}</Nav.Link>
+                            <Nav.Item><Nav.Link as={NavLink} replace={true} to="/account" activeClassName="active">
+                                <FontAwesomeIcon icon={faUserAlt} /> {text.Account}</Nav.Link></Nav.Item>
+                            <Nav.Item><Nav.Link as={NavLink} replace={true} to="/myroom" activeClassName="active">
+                                <FontAwesomeIcon icon={faUsers} /> {text.My_Room}</Nav.Link></Nav.Item>
                         </>
-                        : <Nav.Link className="m-auto" as={NavLink} to="/signin/user/register" activeClassName="active">
-                            <FontAwesomeIcon icon={faUserPlus} /> {text.Register}</Nav.Link>
+                        : <Nav.Item><Nav.Link as={NavLink} replace={true} to="/signin/user/register" activeClassName="active">
+                            <FontAwesomeIcon icon={faUserPlus} /> {text.Register}</Nav.Link></Nav.Item>
                 }
-                <Nav.Link onClick={ev => { ev.preventDefault(); context.signOut(); }} className="m-auto">
-                    <FontAwesomeIcon icon={faSignOutAlt} /> {text.Log_Out}</Nav.Link>
+                <Nav.Item><Nav.Link onClick={ev => { ev.preventDefault(); context.signOut(); }}>
+                    <FontAwesomeIcon icon={faSignOutAlt} /> {text.Log_Out}</Nav.Link></Nav.Item>
             </Nav>
         </Navbar.Collapse>
     </Navbar>
