@@ -1,4 +1,4 @@
-const CURRENT_CACHE = "rooms2.0";
+const CURRENT_CACHE = "rooms2.1";
 
 self.addEventListener("activate", event => {
     event.waitUntil(
@@ -15,7 +15,8 @@ self.addEventListener("activate", event => {
 
 self.addEventListener('fetch', event => {
     if (event.request.url.startsWith('http') && event.request.method === 'GET'
-        && !event.request.url.startsWith(new URL('api', location.origin)))
+        && !event.request.url.startsWith(new URL('api', location.origin))
+        && !(event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin'))
     {
         caches.match(event.request).then(response => {
             return response || fetch(event.request).then(response => {
