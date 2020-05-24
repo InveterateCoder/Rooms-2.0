@@ -527,10 +527,24 @@ export class Room extends Component {
         String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     formUserColor = (id, guid) => {
         if (id === this.context.userId && guid === this.context.userGuid)
-            return " line c0";
+            return " c0";
         let item = this.state.users.find(u => u.id === id && u.guid === guid);
-        if (item) return ` line c${item.color}`;
+        if (item) return ` c${item.color}`;
         return "";
+    }
+    highlight = text => {
+        text = this.htmlEncode(text);
+        text = text.replace(emojiRegex, '<span style="font-size:1.3rem">$&</span>');
+        text = text.replace(htmlRegex, '<a href="$&" target="_blank">$&</a>');
+        let name = this.htmlEncode(this.state.name);
+        let regex = new RegExp(this.regexEscape(name), "g");
+        text = text.replace(regex, `<span class="c0 nshad">${name}</span>`);
+        this.state.users.forEach(user => {
+            name = this.htmlEncode(user.name);
+            regex = new RegExp(this.regexEscape(name), "g");
+            text = text.replace(regex, `<span class="${'c' + user.color} nshad">${name}</span>`);
+        });
+        return text;
     }
     formMessage = (msgs, today, highlight = false) => {
         let msg;
@@ -540,8 +554,8 @@ export class Room extends Component {
         let msgText = highlight ? this.highlight(msg.text) : this.htmlEncode(msg.text);
         let time = this.formTime(msg.time, today);
         let elem = document.createElement("div");
-        elem.className = "media p-1 mb-1";
-        let inHTML = `<span class="mr-2 mt-2 ${msg.icon}"></span>
+        elem.className = "media p-1 mb-2";
+        let inHTML = `<span class="mr-2 mt-2 ${msg.icon}${highlight ? this.formUserColor(msg.userId, msg.userGuid) : ""}"></span>
         <div class="media-body">
         <div class="mb-1"><span tabindex="-1" class="ml-1 name${msgs === msg ? this.formUserColor(msg.userId, msg.userGuid) : ""}">${this.htmlEncode(msg.sender)}</span><small class="ml-2">${time ? "<code>" + time + "</code>" : "&#8987;"}</small></div>
         <pre ${msg.secret ? 'class="secret"' : ""}>${msgText}</pre>`;
@@ -560,21 +574,26 @@ export class Room extends Component {
         elem.querySelector('.name').addEventListener("click", this.msgNameClick);
         return elem;
     }
-    notify = msg => {
-        let id = Date.now();
-        let date = new Date(id);
-        let time = `${date.getHours()}:${date.getMinutes()}`;
-        let timeoutId = setTimeout(() => this.removeNotification(id), 7000);
-        this.setState({ toasts: [[id, time, msg, timeoutId], ...this.state.toasts] },
-            () => {
-                if (this.state.sound)
-                    this.soundNotif.play().catch(() => { });
-            });
-    }
-    removeNotification = id => {
-        let notif = this.state.toasts.find(el => el[0] === id);
-        clearTimeout(notif[3]);
-        this.setState({ toasts: this.state.toasts.filter(t => t[0] !== id) });
+    mergeMessage = (msg, scroll) => {
+        let div, pre;
+        if (msg.time - this.lastMessage.time > 600000000) {
+            let time = this.formTime(msg.time, null);
+            div = document.createElement("div");
+            div.className = "mb-1";
+            div.innerHTML = `<span style="visibility:hidden" tabindex="-1" class="ml-1">${this.htmlEncode(msg.sender)}</span><small class="ml-2">${time ? "<code>" + time + "</code>" : "&#8987;"}</small>`;
+        }
+        pre = document.createElement("pre");
+        if (msg.secret)
+            pre.className = "secret";
+        pre.innerHTML = this.highlight(msg.text);
+        this.lastMessage.time = msg.time;
+        let el = this.lastMessage.elem.querySelector('div');
+        if (div)
+            el.appendChild(div);
+        el.appendChild(pre);
+        if (scroll)
+            document.scrollingElement.scrollTo(0, document.scrollingElement.scrollHeight);
+        return pre;
     }
     fillMessages = msgs => {
         let today = new Date();
@@ -608,31 +627,26 @@ export class Room extends Component {
             connectedMsgs = [];
         }
     }
-    mergeMessage = (msg, scroll) => {
-        let div, pre;
-        if (msg.time - this.lastMessage.time > 600000000) {
-            let time = this.formTime(msg.time, null);
-            div = document.createElement("div");
-            div.className = "mb-1";
-            div.innerHTML = `<span style="visibility:hidden" tabindex="-1" class="ml-1">${this.htmlEncode(msg.sender)}</span><small class="ml-2">${time ? "<code>" + time + "</code>" : "&#8987;"}</small>`;
-        }
-        pre = document.createElement("pre");
-        if (msg.secret)
-            pre.className = "secret";
-        pre.innerHTML = this.highlight(msg.text);
-        this.lastMessage.time = msg.time;
-        let el = this.lastMessage.elem.querySelector('div');
-        if (div)
-            el.appendChild(div);
-        el.appendChild(pre);
-        if (scroll)
-            document.scrollingElement.scrollTo(0, document.scrollingElement.scrollHeight);
-        return pre;
-    }
     appendMessage = (msg, scroll) => {
         this.msgpanel.current.appendChild(msg);
         if (scroll)
             document.scrollingElement.scrollTo(0, document.scrollingElement.scrollHeight);
+    }
+    notify = msg => {
+        let id = Date.now();
+        let date = new Date(id);
+        let time = `${date.getHours()}:${date.getMinutes()}`;
+        let timeoutId = setTimeout(() => this.removeNotification(id), 7000);
+        this.setState({ toasts: [[id, time, msg, timeoutId], ...this.state.toasts] },
+            () => {
+                if (this.state.sound)
+                    this.soundNotif.play().catch(() => { });
+            });
+    }
+    removeNotification = id => {
+        let notif = this.state.toasts.find(el => el[0] === id);
+        clearTimeout(notif[3]);
+        this.setState({ toasts: this.state.toasts.filter(t => t[0] !== id) });
     }
     addUser = usr => {
         usr.color = userColors.pop();
@@ -651,20 +665,6 @@ export class Room extends Component {
         this.notify(`"${usr.name}" ${text.left}`);
     }
     regexEscape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    highlight = text => {
-        text = this.htmlEncode(text);
-        text = text.replace(emojiRegex, '<span style="font-size:1.3rem">$&</span>');
-        text = text.replace(htmlRegex, '<a href="$&" target="_blank">$&</a>');
-        let name = this.htmlEncode(this.state.name);
-        let regex = new RegExp(this.regexEscape(name), "g");
-        text = text.replace(regex, `<span class="c0n nshad">${name}</span>`);
-        this.state.users.forEach(user => {
-            name = this.htmlEncode(user.name);
-            regex = new RegExp(this.regexEscape(name), "g");
-            text = text.replace(regex, `<span class="${'c' + user.color + 'n'} nshad">${name}</span>`);
-        });
-        return text;
-    }
     questionReplacer = (match, p1) => {
         if (p1) return match;
         else return '❔';

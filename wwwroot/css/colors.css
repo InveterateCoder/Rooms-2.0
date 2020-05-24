@@ -1,0 +1,205 @@
+#msgpanel .c0 {
+    color: #1f7aec;
+}
+#msgpanel .c1 {
+    color: #e542a3;
+}
+
+#msgpanel .c2{
+    color: #6bcbef;
+}
+
+#msgpanel .c3 {
+    color: #91ab01;
+}
+
+#msgpanel .c4 {
+    color: #ffa97a;
+}
+#msgpanel .c5 {
+    color: #35cd96;
+}
+
+#msgpanel .c6 {
+    color: #8b7add;
+}
+#msgpanel .c7 {
+    color: #fe7c7f;
+}
+#msgpanel .c8 {
+    color: #dfb610;
+}
+#msgpanel .c9 {
+    color: #ba33dc;
+}
+#msgpanel .c10 {
+    color: #59d368;
+}
+#msgpanel .c11 {
+    color: #fd85d4;
+}
+#msgpanel .c12 {
+    color: #ff8f2c;
+}
+#msgpanel .c13 {
+    color: #3bdec3;
+}
+#msgpanel .c14 {
+    color: #ef4b4f;
+}
+
+#msgpanel > div > span.man {
+    background-image: url("/img/man.light.svg");
+}
+#msgpanel.dark > div > span.man {
+    background-image: url("/img/man.dark.svg");
+}
+#msgpanel > div > span.man.c0 {
+    background-image: url("/img/man/man.c0.svg");
+}
+#msgpanel > div > span.man.c1 {
+    background-image: url("/img/man/man.c1.svg");
+}
+#msgpanel > div > span.man.c2 {
+    background-image: url("/img/man/man.c2.svg");
+}
+#msgpanel > div > span.man.c3 {
+    background-image: url("/img/man/man.c3.svg");
+}
+#msgpanel > div > span.man.c4 {
+    background-image: url("/img/man/man.c4.svg");
+}
+#msgpanel > div > span.man.c5 {
+    background-image: url("/img/man/man.c5.svg");
+}
+#msgpanel > div > span.man.c6 {
+    background-image: url("/img/man/man.c6.svg");
+}
+#msgpanel > div > span.man.c7 {
+    background-image: url("/img/man/man.c7.svg");
+}
+#msgpanel > div > span.man.c8 {
+    background-image: url("/img/man/man.c8.svg");
+}
+#msgpanel > div > span.man.c9 {
+    background-image: url("/img/man/man.c9.svg");
+}
+#msgpanel > div > span.man.c10 {
+    background-image: url("/img/man/man.c10.svg");
+}
+#msgpanel > div > span.man.c11 {
+    background-image: url("/img/man/man.c11.svg");
+}
+#msgpanel > div > span.man.c12 {
+    background-image: url("/img/man/man.c12.svg");
+}
+#msgpanel > div > span.man.c13 {
+    background-image: url("/img/man/man.c13.svg");
+}
+#msgpanel > div > span.man.c14 {
+    background-image: url("/img/man/man.c14.svg");
+}
+
+#msgpanel > div > span.woman {
+    background-image: url("/img/woman.light.svg");
+}
+#msgpanel.dark > div > span.woman {
+    background-image: url("/img/woman.dark.svg");
+}
+#msgpanel > div > span.woman.c0 {
+    background-image: url("/img/woman/woman.c0.svg");
+}
+#msgpanel > div > span.woman.c1 {
+    background-image: url("/img/woman/woman.c1.svg");
+}
+#msgpanel > div > span.woman.c2 {
+    background-image: url("/img/woman/woman.c2.svg");
+}
+#msgpanel > div > span.woman.c3 {
+    background-image: url("/img/woman/woman.c3.svg");
+}
+#msgpanel > div > span.woman.c4 {
+    background-image: url("/img/woman/woman.c4.svg");
+}
+#msgpanel > div > span.woman.c5 {
+    background-image: url("/img/woman/woman.c5.svg");
+}
+#msgpanel > div > span.woman.c6 {
+    background-image: url("/img/woman/woman.c6.svg");
+}
+#msgpanel > div > span.woman.c7 {
+    background-image: url("/img/woman/woman.c7.svg");
+}
+#msgpanel > div > span.woman.c8 {
+    background-image: url("/img/woman/woman.c8.svg");
+}
+#msgpanel > div > span.woman.c9 {
+    background-image: url("/img/woman/woman.c9.svg");
+}
+#msgpanel > div > span.woman.c10 {
+    background-image: url("/img/woman/woman.c10.svg");
+}
+#msgpanel > div > span.woman.c11 {
+    background-image: url("/img/woman/woman.c11.svg");
+}
+#msgpanel > div > span.woman.c12 {
+    background-image: url("/img/woman/woman.c12.svg");
+}
+#msgpanel > div > span.woman.c13 {
+    background-image: url("/img/woman/woman.c13.svg");
+}
+#msgpanel > div > span.woman.c14 {
+    background-image: url("/img/woman/woman.c14.svg");
+}
+
+#msgpanel > div > span.user {
+    background-image: url("/img/user.light.svg");
+}
+#msgpanel.dark > div > span.user {
+    background-image: url("/img/user.dark.svg");
+}
+#msgpanel > div > span.user.c0 {
+    background-image: url("/img/user/user.c0.svg");
+}
+#msgpanel > div > span.user.c1 {
+    background-image: url("/img/user/user.c1.svg");
+}
+#msgpanel > div > span.user.c2 {
+    background-image: url("/img/user/user.c2.svg");
+}
+#msgpanel > div > span.user.c3 {
+    background-image: url("/img/user/user.c3.svg");
+}
+#msgpanel > div > span.user.c4 {
+    background-image: url("/img/user/user.c4.svg");
+}
+#msgpanel > div > span.user.c5 {
+    background-image: url("/img/user/user.c5.svg");
+}
+#msgpanel > div > span.user.c6 {
+    background-image: url("/img/user/user.c6.svg");
+}
+#msgpanel > div > span.user.c7 {
+    background-image: url("/img/user/user.c7.svg");
+}
+#msgpanel > div > span.user.c8 {
+    background-image: url("/img/user/user.c8.svg");
+}
+#msgpanel > div > span.user.c9 {
+    background-image: url("/img/user/user.c9.svg");
+}
+#msgpanel > div > span.user.c10 {
+    background-image: url("/img/user/user.c10.svg");
+}
+#msgpanel > div > span.user.c11 {
+    background-image: url("/img/user/user.c11.svg");
+}
+#msgpanel > div > span.user.c12 {
+    background-image: url("/img/user/user.c12.svg");
+}
+#msgpanel > div > span.user.c13 {
+    background-image: url("/img/user/user.c13.svg");
+}
+#msgpanel > div > span.user.c14 {
+    background-image: url("/img/user/user.c14.svg");
+}

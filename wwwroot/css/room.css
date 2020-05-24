@@ -208,224 +208,41 @@
     user-select: none;
     -webkit-user-drag: none;
 }
-#msgpanel > div > span.man {
-    background-image: url("/img/man.light.svg");
-}
-#msgpanel > div > span.woman {
-    background-image: url("/img/woman.light.svg");
-}
-#msgpanel > div > span.user {
-    background-image: url("/img/user.light.svg");
-}
-#msgpanel.dark > div > span.man {
-    background-image: url("/img/man.dark.svg");
-}
-#msgpanel.dark > div > span.woman {
-    background-image: url("/img/woman.dark.svg");
-}
-#msgpanel.dark > div > span.user {
-    background-image: url("/img/user.dark.svg");
-}
 #msgpanel > div {
-    border-bottom: 1px solid rgba(52, 58, 64, .3);
-    border-left: 1px solid rgba(52, 58, 64, .3);
+    box-shadow: 0 0 5px 1px rgba(52, 58, 64, .3);
     border-radius: 25px 0 25px 0;
     overflow: hidden;
 }
 #msgpanel.dark > div {
-    border-color: rgba(248, 249, 250, .3);
+    box-shadow: 0 0 5px 1px rgba(248, 249, 250, .3);
 }
 #msgpanel .name {
     cursor: pointer;
     font-weight: 700;
     color: #343a40;
+    font-size: 14px;
     letter-spacing: 1px;
 }
 #msgpanel.dark .name {
     color: #f8f9fa;
     font-weight: 600;
 }
-#msgpanel .line {
-    border-bottom: 2px solid;
+#msgpanel .name:hover {
+    text-decoration: underline;
 }
-#msgpanel .c0 {
-    border-color: red;
-}
-#msgpanel .c1 {
-    border-color: mediumblue;
-}
-#msgpanel.dark .c1 {
-    border-color: dodgerblue;
-}
-#msgpanel .c2{
-    border-color: darkturquoise;
-}
-#msgpanel.dark .c2 {
-    border-color: turquoise;
-}
-#msgpanel .c3 {
-    border-color: orchid;
-}
-#msgpanel.dark .c3 {
-    border-color: violet;
-}
-#msgpanel .c4 {
-    border-color: darkkhaki;
-}
-#msgpanel.dark .c4 {
-    border-color: yellow;
-}
-#msgpanel .c5 {
-    border-color: dodgerblue;
-}
-#msgpanel.dark .c5 {
-    border-color: lightskyblue;
-}
-#msgpanel .c6 {
-    border-color: limegreen;
-}
-#msgpanel.dark .c6 {
-    border-color: lightgreen;
-}
-#msgpanel .c7 {
-    border-color: palevioletred;
-}
-#msgpanel.dark .c7 {
-    border-color: lightcoral;
-}
-#msgpanel .c8 {
-    border-color: mediumpurple;
-}
-#msgpanel .c9 {
-    border-color: orange;
-}
-#msgpanel .c10 {
-    border-color: firebrick;
-}
-#msgpanel.dark .c10 {
-    border-color: deeppink;
-}
-#msgpanel .c11 {
-    border-color: lightseagreen;
-}
-#msgpanel.dark .c11 {
-    border-color: darkseagreen;
-}
-#msgpanel .c12 {
-    border-color: lightpink;
-}
-#msgpanel.dark .c12 {
-    border-color: peachpuff;
-}
-#msgpanel .c13 {
-    border-color: slategray;
-}
-#msgpanel.dark .c13 {
-    border-color: lavender;
-}
-#msgpanel .c14 {
-    border-color: silver;
-}
-#msgpanel.dark .c14 {
-    border-color: lightslategray;
-}
-/*-----------------------------------------------*/
 #msgpanel .nshad {
     font-size: 1rem;
     font-weight: 500;
-    text-shadow: 0 0 15px #343a40;
+    text-shadow: 0 0 10px rgba(52, 58, 64, .4);
 }
 #msgpanel.dark .nshad {
-    text-shadow: 0 0 15px #f8f9fa;
+    text-shadow: 0 0 10px rgba(248, 249, 250, .4);
 }
-#msgpanel .c0n {
-    color: red;
-}
-#msgpanel .c1n {
-    color: mediumblue;
-}
-#msgpanel.dark .c1n {
-    color: dodgerblue;
-}
-#msgpanel .c2n {
-    color: darkturquoise;
-}
-#msgpanel.dark .c2n {
-    color: turquoise;
-}
-#msgpanel .c3n {
-    color: orchid;
-}
-#msgpanel.dark .c3n {
-    color: violet;
-}
-#msgpanel .c4n {
-    color: darkkhaki;
-}
-#msgpanel.dark .c4n {
-    color: yellow;
-}
-#msgpanel .c5n {
-    color: dodgerblue;
-}
-#msgpanel.dark .c5n {
-    color: lightskyblue;
-}
-#msgpanel .c6n {
-    color: limegreen;
-}
-#msgpanel.dark .c6n {
-    color: lightgreen;
-}
-#msgpanel .c7n {
-    color: palevioletred;
-}
-#msgpanel.dark .c7n {
-    color: lightcoral;
-}
-#msgpanel .c8n {
-    color: mediumpurple;
-}
-#msgpanel .c9n {
-    color: orange;
-}
-#msgpanel .c10n {
-    color: firebrick;
-}
-#msgpanel.dark .c10n {
-    color: deeppink;
-}
-#msgpanel .c11n {
-    color: lightseagreen;
-}
-#msgpanel.dark .c11n {
-    color: darkseagreen;
-}
-#msgpanel .c12n {
-    color: lightpink;
-}
-#msgpanel.dark .c12n {
-    color: peachpuff;
-}
-#msgpanel .c13n {
-    color: slategray;
-}
-#msgpanel.dark .c13n {
-    color: lavender;
-}
-#msgpanel .c14n {
-    color: silver;
-}
-#msgpanel.dark .c14n {
-    color: lightslategray;
-}
-/*-----------------------------------------------*/
 #msgpanel > div > div > pre {
     margin-left: 2px;
     white-space: pre-wrap;
     word-wrap: break-word;
     margin-bottom: 0;
-    color: black !important;
 }
 #msgpanel.dark > div > div > pre {
     color: #f8f9fa !important;
