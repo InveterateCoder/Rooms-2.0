@@ -1,4 +1,4 @@
-const CURRENT_CACHE = "rooms2.2";
+const CURRENT_CACHE = "rooms2.2.1";
 
 self.addEventListener("activate", event => {
     event.waitUntil(
