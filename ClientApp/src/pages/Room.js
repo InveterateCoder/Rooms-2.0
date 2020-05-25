@@ -698,7 +698,7 @@ export class Room extends Component {
                 switch (p2.toLowerCase()) {
                     case ')':
                         return '🙂';
-                    case 'P':
+                    case 'p':
                         return '👅';
                     case '(':
                         return '😟';
