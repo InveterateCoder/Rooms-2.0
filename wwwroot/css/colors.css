@@ -2,24 +2,20 @@
     color: #1f7aec !important;
 }
 #msgpanel .c1 {
-    color: #e542a3 !important;
-}
-
-#msgpanel .c2{
     color: #6bcbef !important;
 }
-
-#msgpanel .c3 {
+#msgpanel .c2{
     color: #91ab01 !important;
 }
-
+#msgpanel .c3 {
+    color: #e542a3 !important;
+}
 #msgpanel .c4 {
     color: #ffa97a !important;
 }
 #msgpanel .c5 {
     color: #35cd96 !important;
 }
-
 #msgpanel .c6 {
     color: #8b7add !important;
 }
