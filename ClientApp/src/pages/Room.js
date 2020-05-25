@@ -670,16 +670,16 @@ export class Room extends Component {
         else return '❔';
     }
     uniqueReplacer = (_m, _p, p2) => {
-        switch (p2) {
-            case 'y':
+        switch (p2.toLowerCase()) {
+            case 'yes':
                 return "👍";
-            case 'n':
+            case 'no':
                 return "👎";
-            case 'r':
+            case 'rose':
                 return "🌹";
-            case 'h':
+            case 'heart':
                 return "💖";
-            case 'w':
+            case 'wave':
                 return "👋";
             case 'lol':
                 return "😂";
@@ -695,21 +695,15 @@ export class Room extends Component {
                     return '😉';
                 break;
             case ':':
-                switch (p2) {
+                switch (p2.toLowerCase()) {
                     case ')':
                         return '🙂';
                     case 'P':
                         return '👅';
-                    case 'p':
-                        return '👅';
                     case '(':
                         return '😟';
-                    case 'D':
-                        return '😄';
                     case 'd':
-                        return '😄';
-                    case 'O':
-                        return '😮';
+                        return '😀';
                     case 'o':
                         return '😮';
                 }
@@ -718,7 +712,7 @@ export class Room extends Component {
     }
     replaceWithEmojis = text => {
         return text.replace(/(https?:\/\/[^\s]+)?\?/g, this.questionReplacer).replace(/!/g, '❕').replace(/\^\^/g, "😄")
-            .replace(/([:;]([\)Pp\(DdOo]))/g, this.columnReplacer).replace(/(\(([ynrhlorfw]+)\))/g, this.uniqueReplacer);
+            .replace(/([:;]([)Pp(DdOo]))/g, this.columnReplacer).replace(/(\[(\w+)\])/g, this.uniqueReplacer);
     }
     sendMsg = ev => {
         if (!ev.isTrusted) {

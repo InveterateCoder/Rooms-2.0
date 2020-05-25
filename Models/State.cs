@@ -114,10 +114,12 @@ namespace Rooms.Models
             room.ClearMessages(from, till);
             return true;
         }
-        public (string[] users, int cout) ConnectVoiceUser(string connectionId)
+        public (string[] users, string[] all, int cout) ConnectVoiceUser(string connectionId)
         {
             var room = this.GetRoom(connectionId);
-            return (room?.ConnectVoiceUser(connectionId), room.VoiceUsersCount);
+            if (room == null) return (null, null, 0);
+            return (room.ConnectVoiceUser(connectionId),
+                room.Users.Select(u => u.ConnectionId).ToArray(), room.VoiceUsersCount);
         }
         public int DisconnectVoiceUser(string connectionId)
         {
@@ -165,10 +167,10 @@ namespace Rooms.Models
         public List<HubCallerContext> AllConnections(long id, string guid)
         {
             List<HubCallerContext> userList = new List<HubCallerContext>();
-            foreach(var room in _activeRooms.Values)
+            foreach (var room in _activeRooms.Values)
             {
                 var user = room.ConnectionByCred(id, guid);
-                if(user != null)
+                if (user != null)
                     userList.Add(user);
             }
             return userList;
