@@ -119,6 +119,7 @@
     resize: none;
     height: 38px;
     max-height: 161px;
+    overflow:hidden;
 }
 .focused #input {
     background-color: white;

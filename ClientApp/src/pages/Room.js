@@ -671,15 +671,15 @@ export class Room extends Component {
     }
     uniqueReplacer = (_m, _p, p2) => {
         switch (p2.toLowerCase()) {
-            case 'yes':
+            case 'y':
                 return "👍";
-            case 'no':
+            case 'n':
                 return "👎";
-            case 'rose':
+            case 'r':
                 return "🌹";
-            case 'heart':
+            case 'h':
                 return "💖";
-            case 'wave':
+            case 'w':
                 return "👋";
             case 'lol':
                 return "😂";
@@ -699,9 +699,11 @@ export class Room extends Component {
                     case ')':
                         return '🙂';
                     case 'p':
-                        return '👅';
+                        return '😜';
                     case '(':
                         return '😟';
+                    case '|':
+                        return '😐';
                     case 'd':
                         return '😀';
                     case 'o':
@@ -861,9 +863,16 @@ export class Room extends Component {
         if (top - 2 !== this.inputRef.current.scrollHeight && this.inputRef.current.scrollHeight - top < 36)
             this.inputRef.current.scrollTo(0, this.inputRef.current.scrollHeight);
         let newHeigh = this.inputRef.current.offsetHeight;
-        if (this.inputMaxed && newHeigh < 161) this.inputMaxed = false;
+        debugger;
+        if (this.inputMaxed && newHeigh < 161) {
+            this.inputMaxed = false;
+            this.inputRef.current.style.overflowY = "hidden";
+        }
         if (!this.inputMaxed && newHeigh !== this.inputHeight) {
-            if (newHeigh === 161) this.inputMaxed = true;
+            if (newHeigh === 161) {
+                this.inputMaxed = true;
+                this.inputRef.current.style.overflowY = "scroll";
+            }
             this.inputResized(newHeigh - this.inputHeight);
             this.inputHeight = newHeigh;
         }
