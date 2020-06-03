@@ -15,7 +15,7 @@ export function FormGroup(props) {
                     value={props.value} name={props.name} onChange={props.inputChanged}/>
             case "search":
                 return <>
-                    <input spellCheck={false} type="search" onKeyPress={keyPressed} placeholder={props.holder} name="langs"
+                    <input spellCheck={false} type="search" onKeyPress={keyPressed} placeholder={props.holder}
                         className={`form-control ${props.error && props.value && "error"}`}
                         list="search" value={props.value} onChange={props.inputChanged} />
                     <button disabled={props.error} onClick={props.add}

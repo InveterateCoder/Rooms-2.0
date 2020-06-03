@@ -84,6 +84,7 @@ export function Account(props) {
     const cancelChanges = () => {
         setNameError("");
         setName(context.name);
+        setNewPassword("");
     }
     const apply = () => {
         if (isValid() && hasFormChanged()) {
@@ -115,8 +116,7 @@ export function Account(props) {
         <Avatar image={context.icon} selectImage={icon => changeIcon(icon)} theme={context.theme} />
         <FormGroup type="text" label={text.name} value={name} name="name"
             inputChanged={nameChanged} error={nameError} />
-        <PasswordGroup type="password" lang={context.lang} newpassword={newpassword}
-            onChange={newPasswordChanged} />
+        <PasswordGroup lang={context.lang} newpassword={newpassword} onChange={newPasswordChanged} />
         <div id="conf_acc_change" className={`${hasFormChanged() ? "" : "invisible"}`}>
             <button className="btn btn-outline-secondary mr-2" onClick={cancelChanges}>{text.cancel}</button>
             {

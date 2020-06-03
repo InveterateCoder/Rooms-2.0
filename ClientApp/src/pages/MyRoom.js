@@ -144,7 +144,7 @@ export function MyRoom(props) {
             <textarea onChange={descriptionChanged} className="form-control" rows="3" value={rdescription.description} />
             <p className="text-danger"><small>{rdescription.error}</small></p>
         </div>
-        <PasswordGroup lang={context.lang} newpassword={rpassword} onChange={rpasswordChanged} />
+        <PasswordGroup type="room" lang={context.lang} newpassword={rpassword} onChange={rpasswordChanged} />
         <div className="form-group mt-5">
             <label className="h5">{text.active} <span className={`badge badge-${context.theme === "dark" ? "light text-dark" : "dark"} ml-2 p-2`}>{rlimit}</span></label>
             <input type="range" className="custom-range" min="2" max="15"

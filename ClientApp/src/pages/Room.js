@@ -8,7 +8,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faAngleLeft, faInfoCircle, faExclamationTriangle, faSignInAlt, faArrowCircleDown, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 import Spinner from "react-loading";
 import LocalizedStrings from "react-localization";
-import Password from "react-type-password";
 import validator from "../utils/validator";
 import * as signalR from "@aspnet/signalr";
 import Picker, { SKIN_TONE_NEUTRAL } from "emoji-picker-react";
@@ -109,7 +108,6 @@ export class Room extends Component {
             warning: null,
             loading: true,
             blocked: false,
-            password: "",
             roomId: 0,
             myId: 0,
             name: context.name,
@@ -180,6 +178,7 @@ export class Room extends Component {
             elem: undefined,
             time: undefined
         };
+        this.passwordRef = React.createRef();
     }
     muteUser = (usr, min) => {
         this.connection.invoke("MuteUser", usr, min).then(() => alert(text.userMuted)).catch(err => { alert(err.message) });
@@ -422,7 +421,6 @@ export class Room extends Component {
         else
             this.setState({ sound: true }, () => localStorage.setItem("sound", "on"));
     }
-    passwordChanged = val => this.setState({ password: val });
     passwordKeyPressed = ev => {
         if (ev.target.tagName === "INPUT" && ev.which === 13)
             this.confirmPassword();
@@ -463,7 +461,8 @@ export class Room extends Component {
         });
     }
     confirmPassword = () => {
-        let err = validator.password(this.state.password, this.context.lang);
+        let password = this.passwordRef.current.value;
+        let err = validator.password(password, this.context.lang);
         if (err) alert(err);
         else this.setState({ loading: true, blocked: false }, async () => {
             try {
@@ -472,7 +471,7 @@ export class Room extends Component {
                 let data = null;
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 data = await this.connection.invoke("Enter", this.props.match.params["room"],
-                    this.state.icon, this.state.password, this.msgsCount);
+                    this.state.icon, password, this.msgsCount);
                 if (data)
                     this.processEnter(data);
             } catch (err) {
@@ -923,8 +922,7 @@ export class Room extends Component {
         else if (this.state.blocked) return <div id="roompass">
             <h4 className="text-info mb-4">{text.rmspassword}</h4>
             <div className="input-group" onKeyPress={this.passwordKeyPressed}>
-                <Password className="form-control" placeholder={text.pswdplcholder} value={this.state.password}
-                    onChange={this.passwordChanged} />
+                <input ref={this.passwordRef} type="text" className="form-control" placeholder={text.pswdplcholder} />
                 <div className="input-group-append">
                     <button className="btn btn-primary" onClick={this.confirmPassword}>
                         <FontAwesomeIcon icon={faSignInAlt} />
