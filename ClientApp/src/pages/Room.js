@@ -455,7 +455,7 @@ export class Room extends Component {
             else
                 this.oldestMsgTime = data.messages[length - 1].time;
             this.fillMessages(data.messages);
-            window.scrollTo(0, document.body.scrollHeight);
+            window.scrollTo(0, document.scrollingElement.scrollHeight);
             this.windowScrolled();
             setTimeout(this.enterTimeout, 1000);
         });
