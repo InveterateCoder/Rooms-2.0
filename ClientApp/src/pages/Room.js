@@ -372,11 +372,11 @@ export class Room extends Component {
             setTimeout(() => this.keyboardResizeTime = false, 300);
         });
     }
+    closemenu = () => this.setState({ menuopen: false });
     themeChanged = theme => {
         if (theme === "dark" || theme === "light")
             this.setState({ theme }, () => document.body.className = `bg-${theme}`);
     }
-    closemenu = () => this.setState({ menuopen: false });
     windowScrolled = () => {
         let scrTop = document.scrollingElement.scrollTop;
         let scrHeight = document.scrollingElement.scrollHeight;

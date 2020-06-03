@@ -6,6 +6,7 @@
     overflow-y: scroll;
     max-width: 576px;
     text-align: right;
+    z-index: 1;
 }
 #toasts > div {
     text-align: left;
@@ -36,15 +37,18 @@
     opacity: .7;
 }
 #roomcont {
-    float: right;
-    width: 77%;
+    position: absolute;
+    right: 0;
+    left: 307px;
     padding-top: 72px;
     padding-bottom: 73px;
+    transition: left .4s;
+    width: auto;
 }
 #roomcont nav.navbar {
     position: fixed;
     top: 0;
-    left: 23%;
+    left: 307px;
     right: 0;
     transition: left .4s;
 }
@@ -59,8 +63,9 @@
 }
 #inpgroup {
     position: fixed;
-    left: 24%;
-    width: 75%;
+    left: 322px;
+    right: 15px;
+    width: auto;
     bottom: 25px;
     transition: left .4s, bottom .2s, width .4s;
 }
@@ -130,7 +135,8 @@
     top:0;
     left:0;
     bottom:0;
-    width: 23%;
+    width: 90%;
+    max-width: 307px;
     transition: margin .4s;
 }
 #roommenu > nav.navbar {
@@ -306,9 +312,9 @@
     1px 30px 60px rgba(16,16,16,0.4);
     transition: opacity 2s ease-in;
 }
-@media screen and (max-width:1350px) {
+@media screen and (max-width: 768px) {
     #roomcont {
-        width: 100%;
+        left: 0;
     }
     #roomcont nav.navbar {
         left: 0;
@@ -321,8 +327,6 @@
         display: inline-block;
     }
     #roommenu {
-        max-width: 307px;
         margin-left: -307px;
-        width: 90%;
     }
 }
