@@ -29,7 +29,13 @@ export function Presenter(props) {
     const newWindow = addr => {
         let width = window.innerWidth < 1150 ? window.innerWidth : 1150;
         let height = window.innerHeight < 700 ? window.innerHeight : 700;
-        window.open(addr, "", `width=${width},height=${height}`);
+        let right = window.screen.width - window.outerWidth - window.screenLeft;
+        let bottom = window.screen.height - window.outerHeight - window.screenTop;
+        let xdiff = window.screenLeft - right - 24;
+        let ydiff = window.screenTop - bottom;
+        let left = (window.screen.width - width + xdiff) / 2;
+        let top = (window.screen.height - height + ydiff) / 2;
+        window.open(addr, "", `width=${width},height=${height},left=${left},top=${top}`);
     }
     text.setLanguage(context.lang);
     return <div id="content">
@@ -45,7 +51,7 @@ export function Presenter(props) {
                         {
                             context.openin === "nw"
                                 ? <a href={"/room/" + item.slug}
-                                    onClick={ev => { ev.preventDefault(); newWindow("/room/" + item.slug)}}
+                                    onClick={ev => { ev.preventDefault(); newWindow("/room/" + item.slug) }}
                                     className="card-body">
                                     {getContent(item)}
                                 </a>
